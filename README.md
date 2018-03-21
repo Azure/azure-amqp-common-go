@@ -1,5 +1,9 @@
+# Azure AMQP Common
+This project contains reusable components for AMQP based services like Event Hub and Service Bus. You will find 
+abstractions over authentication, claims-based security, connection string parsing, checkpointing and RPC for AMQP.
 
-# Contributing
+The project is not intended to be used as 
+## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
