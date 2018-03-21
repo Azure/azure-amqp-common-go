@@ -2,7 +2,20 @@
 This project contains reusable components for AMQP based services like Event Hub and Service Bus. You will find 
 abstractions over authentication, claims-based security, connection string parsing, checkpointing and RPC for AMQP.
 
-The project is not intended to be used as 
+## Install
+
+```
+go get github.com/Azure/azure-amqp-common-go
+```
+
+### Or via dep
+
+```toml
+[[constraint]]
+    name = "github.com/Azure/azure-amqp-common-go"
+    branch = "master"
+```
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
