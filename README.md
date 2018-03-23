@@ -1,4 +1,7 @@
 # Azure AMQP Common
+[![godoc](https://godoc.org/github.com/Azure/azure-amqp-common-go?status.svg)](https://godoc.org/github.com/Azure/azure-amqp-common-go)
+[![Build Status](https://travis-ci.org/Azure/azure-amqp-common-go.svg?branch=master)](https://travis-ci.org/Azure/azure-amqp-common-go)
+
 This project contains reusable components for AMQP based services like Event Hub and Service Bus. You will find 
 abstractions over authentication, claims-based security, connection string parsing, checkpointing and RPC for AMQP.
 
