@@ -31,7 +31,7 @@ import (
 const (
 	namespace = "mynamespace"
 	keyName   = "keyName"
-	secret    = "superSecret"
+	secret    = "superSecret="
 	hubName   = "myhub"
 	connStr1  = "Endpoint=sb://" + namespace + ".servicebus.windows.net/;SharedAccessKeyName=" + keyName + ";SharedAccessKey=" + secret + ";EntityPath=" + hubName
 	connStr2  = "Endpoint=sb://" + namespace + ".servicebus.windows.net/;SharedAccessKeyName=" + keyName + ";SharedAccessKey=" + secret
