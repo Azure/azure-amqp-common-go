@@ -29,10 +29,10 @@ import (
 )
 
 const (
-	endpointKey = "Endpoint"
+	endpointKey            = "Endpoint"
 	sharedAccessKeyNameKey = "SharedAccessKeyName"
-	sharedAccessKeyKey = "SharedAccessKey"
-	entityPathKey = "EntityPath"
+	sharedAccessKeyKey     = "SharedAccessKey"
+	entityPathKey          = "EntityPath"
 )
 
 type (
