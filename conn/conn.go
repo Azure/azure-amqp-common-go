@@ -82,7 +82,7 @@ func ParsedConnectionFromStr(connStr string) (*ParsedConn, error) {
 				return nil, errors.New("failed parsing connection string due to Endpoint value not containing a URL with a namespace and a suffix")
 			}
 			namespace = hostSplits[0]
-			suffix = strings.Join(hostSplits[1:], ".") + "/"
+			suffix = strings.Join(hostSplits[1:], ".")
 		case sharedAccessKeyNameKey:
 			keyName = value
 		case sharedAccessKeyKey:

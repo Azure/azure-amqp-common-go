@@ -1,5 +1,8 @@
 # Change Log
 
+## `v0.2.3`
+- handle remove trailing slash from host
+
 ## `v0.2.2`
 - handle connection string values which contain `=`
 

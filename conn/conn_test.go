@@ -40,7 +40,7 @@ const (
 func TestParsedConnectionFromStr(t *testing.T) {
 	parsed, err := ParsedConnectionFromStr(connStr1)
 	assert.Nil(t, err)
-	assert.Equal(t, "amqps://"+namespace+".servicebus.windows.net/", parsed.Host)
+	assert.Equal(t, "amqps://"+namespace+".servicebus.windows.net", parsed.Host)
 	assert.Equal(t, namespace, parsed.Namespace)
 	assert.Equal(t, keyName, parsed.KeyName)
 	assert.Equal(t, secret, parsed.Key)
@@ -50,7 +50,7 @@ func TestParsedConnectionFromStr(t *testing.T) {
 func TestParsedConnectionFromStrWithoutEntityPath(t *testing.T) {
 	parsed, err := ParsedConnectionFromStr(connStr2)
 	assert.Nil(t, err)
-	assert.Equal(t, "amqps://"+namespace+".servicebus.windows.net/", parsed.Host)
+	assert.Equal(t, "amqps://"+namespace+".servicebus.windows.net", parsed.Host)
 	assert.Equal(t, namespace, parsed.Namespace)
 	assert.Equal(t, keyName, parsed.KeyName)
 	assert.Equal(t, secret, parsed.Key)
