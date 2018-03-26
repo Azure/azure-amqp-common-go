@@ -65,11 +65,12 @@ func ParsedConnectionFromStr(connStr string) (*ParsedConn, error) {
 	splits := strings.Split(connStr, ";")
 	for _, split := range splits {
 		keyAndValue := strings.Split(split, "=")
-		if len(keyAndValue) != 2 {
+		if len(keyAndValue) < 2 {
 			return nil, errors.New("failed parsing connection string due to unmatched key value separated by '='")
 		}
 
-		value := keyAndValue[1]
+		// if a key value pair has `=` in the value, recombine them
+		value := strings.Join(keyAndValue[1:], "=")
 		switch keyAndValue[0] {
 		case endpointKey:
 			u, err := url.Parse(value)
