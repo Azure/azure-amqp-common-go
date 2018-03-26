@@ -24,13 +24,15 @@ package conn
 
 import (
 	"errors"
-	"fmt"
-	"regexp"
+	"net/url"
+	"strings"
 )
 
-var (
-	connStrRegex = regexp.MustCompile(`Endpoint=sb:\/\/(?P<Host>.+?);SharedAccessKeyName=(?P<KeyName>.+?);SharedAccessKey=(?P<Key>.+?);EntityPath=(?P<HubName>.+)`)
-	hostStrRegex = regexp.MustCompile(`^(?P<Namespace>.+?)\.(.+?)\/`)
+const (
+	endpointKey = "Endpoint"
+	sharedAccessKeyNameKey = "SharedAccessKeyName"
+	sharedAccessKeyKey = "SharedAccessKey"
+	entityPathKey = "EntityPath"
 )
 
 type (
@@ -46,12 +48,9 @@ type (
 )
 
 // newParsedConnection is a constructor for a parsedConn and verifies each of the inputs is non-null.
-func newParsedConnection(host, suffix, namespace, hubName, keyName, key string) (*ParsedConn, error) {
-	if host == "" || keyName == "" || key == "" {
-		return nil, errors.New("connection string contains an empty entry")
-	}
+func newParsedConnection(namespace, suffix, hubName, keyName, key string) (*ParsedConn, error) {
 	return &ParsedConn{
-		Host:      "amqps://" + host,
+		Host:      "amqps://" + namespace + "." + suffix,
 		Suffix:    suffix,
 		Namespace: namespace,
 		KeyName:   keyName,
@@ -62,8 +61,34 @@ func newParsedConnection(host, suffix, namespace, hubName, keyName, key string) 
 
 // ParsedConnectionFromStr takes a string connection string from the Azure portal and returns the parsed representation.
 func ParsedConnectionFromStr(connStr string) (*ParsedConn, error) {
-	matches := connStrRegex.FindStringSubmatch(connStr)
-	namespaceMatches := hostStrRegex.FindStringSubmatch(matches[1])
-	fmt.Println(matches[1], namespaceMatches[2], namespaceMatches[1], matches[2], matches[3])
-	return newParsedConnection(matches[1], namespaceMatches[2], namespaceMatches[1], matches[4], matches[2], matches[3])
+	var namespace, suffix, hubName, keyName, secret string
+	splits := strings.Split(connStr, ";")
+	for _, split := range splits {
+		keyAndValue := strings.Split(split, "=")
+		if len(keyAndValue) != 2 {
+			return nil, errors.New("failed parsing connection string due to unmatched key value separated by '='")
+		}
+
+		value := keyAndValue[1]
+		switch keyAndValue[0] {
+		case endpointKey:
+			u, err := url.Parse(value)
+			if err != nil {
+				return nil, errors.New("failed parsing connection string due to an incorrectly formatted Endpoint value")
+			}
+			hostSplits := strings.Split(u.Host, ".")
+			if len(hostSplits) < 2 {
+				return nil, errors.New("failed parsing connection string due to Endpoint value not containing a URL with a namespace and a suffix")
+			}
+			namespace = hostSplits[0]
+			suffix = strings.Join(hostSplits[1:], ".") + "/"
+		case sharedAccessKeyNameKey:
+			keyName = value
+		case sharedAccessKeyKey:
+			secret = value
+		case entityPathKey:
+			hubName = value
+		}
+	}
+	return newParsedConnection(namespace, suffix, hubName, keyName, secret)
 }
