@@ -95,6 +95,6 @@ func (fp *FilePersister) Read(namespace, name, consumerGroup, partitionID string
 }
 
 func getFilePath(namespace, name, consumerGroup, partitionID string) string {
-	key := strings.Join([]string{ namespace, name, consumerGroup, partitionID }, "_")
+	key := strings.Join([]string{namespace, name, consumerGroup, partitionID}, "_")
 	return strings.Replace(key, "$", "", -1)
 }

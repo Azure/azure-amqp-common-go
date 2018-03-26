@@ -40,4 +40,4 @@ MIT, see [LICENSE](./LICENSE).
 
 ## Contribute
 
-See [CONTRIBUTING.md](./contributing.md).
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md).
