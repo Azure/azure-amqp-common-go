@@ -1,5 +1,8 @@
 # Change Log
 
+## `master`
+- connection string keys are case insensitive 
+
 ## `v0.2.3`
 - handle remove trailing slash from host
 

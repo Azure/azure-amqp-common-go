@@ -70,9 +70,10 @@ func ParsedConnectionFromStr(connStr string) (*ParsedConn, error) {
 		}
 
 		// if a key value pair has `=` in the value, recombine them
+		key := keyAndValue[0]
 		value := strings.Join(keyAndValue[1:], "=")
-		switch keyAndValue[0] {
-		case endpointKey:
+		switch {
+		case strings.EqualFold(endpointKey, key):
 			u, err := url.Parse(value)
 			if err != nil {
 				return nil, errors.New("failed parsing connection string due to an incorrectly formatted Endpoint value")
@@ -83,11 +84,11 @@ func ParsedConnectionFromStr(connStr string) (*ParsedConn, error) {
 			}
 			namespace = hostSplits[0]
 			suffix = strings.Join(hostSplits[1:], ".")
-		case sharedAccessKeyNameKey:
+		case strings.EqualFold(sharedAccessKeyNameKey, key):
 			keyName = value
-		case sharedAccessKeyKey:
+		case strings.EqualFold(sharedAccessKeyKey, key):
 			secret = value
-		case entityPathKey:
+		case strings.EqualFold(entityPathKey, key):
 			hubName = value
 		}
 	}
