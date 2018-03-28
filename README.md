@@ -1,4 +1,5 @@
 # Azure AMQP Common
+[![Go Report Card](https://goreportcard.com/badge/github.com/Azure/azure-amqp-common-go)](https://goreportcard.com/report/github.com/Azure/azure-amqp-common-go)
 [![godoc](https://godoc.org/github.com/Azure/azure-amqp-common-go?status.svg)](https://godoc.org/github.com/Azure/azure-amqp-common-go)
 [![Build Status](https://travis-ci.org/Azure/azure-amqp-common-go.svg?branch=master)](https://travis-ci.org/Azure/azure-amqp-common-go)
 
