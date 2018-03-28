@@ -1,6 +1,8 @@
 # Change Log
 
 ## `master`
+
+## `v0.2.4`
 - connection string keys are case insensitive 
 
 ## `v0.2.3`
