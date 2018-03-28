@@ -35,10 +35,21 @@ const (
 	hubName   = "myhub"
 	connStr1  = "Endpoint=sb://" + namespace + ".servicebus.windows.net/;SharedAccessKeyName=" + keyName + ";SharedAccessKey=" + secret + ";EntityPath=" + hubName
 	connStr2  = "Endpoint=sb://" + namespace + ".servicebus.windows.net/;SharedAccessKeyName=" + keyName + ";SharedAccessKey=" + secret
+	connStr3  = "endpoint=sb://" + namespace + ".servicebus.windows.net/;SharedAccesskeyName=" + keyName + ";sharedAccessKey=" + secret + ";Entitypath=" + hubName
 )
 
 func TestParsedConnectionFromStr(t *testing.T) {
 	parsed, err := ParsedConnectionFromStr(connStr1)
+	assert.Nil(t, err)
+	assert.Equal(t, "amqps://"+namespace+".servicebus.windows.net", parsed.Host)
+	assert.Equal(t, namespace, parsed.Namespace)
+	assert.Equal(t, keyName, parsed.KeyName)
+	assert.Equal(t, secret, parsed.Key)
+	assert.Equal(t, hubName, parsed.HubName)
+}
+
+func TestParsedConnectionFromStrCaseIndifference(t *testing.T) {
+	parsed, err := ParsedConnectionFromStr(connStr3)
 	assert.Nil(t, err)
 	assert.Equal(t, "amqps://"+namespace+".servicebus.windows.net", parsed.Host)
 	assert.Equal(t, namespace, parsed.Namespace)
