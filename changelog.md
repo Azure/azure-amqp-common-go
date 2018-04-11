@@ -1,6 +1,7 @@
 # Change Log
 
 ## `master`
+- add opentracing support
 
 ## `v0.2.4`
 - connection string keys are case insensitive 
