@@ -1,8 +1,10 @@
 # Change Log
 
 ## `master`
+
+## `v0.3.0`
 - add opentracing support
-- upgrade amqp to pull in the changes where close accepts context
+- upgrade amqp to pull in the changes where close accepts context (breaking change)
 
 ## `v0.2.4`
 - connection string keys are case insensitive 
