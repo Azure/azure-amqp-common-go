@@ -54,7 +54,7 @@ func NegotiateClaim(ctx context.Context, audience string, conn *amqp.Client, pro
 	if err != nil {
 		return err
 	}
-	defer link.Close()
+	defer link.Close(ctx)
 
 	token, err := provider.GetToken(audience)
 	if err != nil {

@@ -2,6 +2,7 @@
 
 ## `master`
 - add opentracing support
+- upgrade amqp to pull in the changes where close accepts context
 
 ## `v0.2.4`
 - connection string keys are case insensitive 

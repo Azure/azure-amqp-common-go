@@ -68,17 +68,17 @@
   revision = "61147c48b25b599e5b561d2e9c4f3e1ef489ca41"
 
 [[projects]]
+  branch = "master"
   name = "pack.ag/amqp"
   packages = [
     ".",
     "internal/testconn"
   ]
-  revision = "fba4c617049c3049d8bc7ba9879daca1a1a2044e"
-  version = "v0.4.1"
+  revision = "ee6eb7ef6e2355b46a573b0b1799f76259f2ea47"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "eb76d991bf676d1c5f089f094605ff34de0bca4b2647832e2bbf84b2b2f43b76"
+  inputs-digest = "6f11b6cba49c265cac76688eba9003e74961def4603f7dfab086f7a996032fd8"
   solver-name = "gps-cdcl"
   solver-version = 1
