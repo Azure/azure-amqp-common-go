@@ -9,8 +9,8 @@
     "autorest/azure",
     "autorest/date"
   ]
-  revision = "7909b98056dd6f6a9fc9b7745af1810c93c15939"
-  version = "v10.3.0"
+  revision = "9ad9326b278af8fa5cc67c30c0ce9a58cc0862b2"
+  version = "v10.6.0"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -25,6 +25,16 @@
   version = "v3.2.0"
 
 [[projects]]
+  name = "github.com/opentracing/opentracing-go"
+  packages = [
+    ".",
+    "ext",
+    "log"
+  ]
+  revision = "1949ddbfd147afd4d964a9f00b24eb291e0e7c38"
+  version = "v1.0.2"
+
+[[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
@@ -37,12 +47,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  name = "github.com/sirupsen/logrus"
-  packages = ["."]
-  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
-  version = "v1.0.5"
-
-[[projects]]
   name = "github.com/stretchr/testify"
   packages = ["assert"]
   revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
@@ -53,19 +57,15 @@
   name = "golang.org/x/crypto"
   packages = [
     "pkcs12",
-    "pkcs12/internal/rc2",
-    "ssh/terminal"
+    "pkcs12/internal/rc2"
   ]
-  revision = "80db560fac1fb3e6ac81dbc7f8ae4c061f5257bd"
+  revision = "d6449816ce06963d9d136eee5a56fca5b0616e7e"
 
 [[projects]]
   branch = "master"
-  name = "golang.org/x/sys"
-  packages = [
-    "unix",
-    "windows"
-  ]
-  revision = "c488ab1dd8481ef762f96a79a9577c27825be697"
+  name = "golang.org/x/net"
+  packages = ["context"]
+  revision = "61147c48b25b599e5b561d2e9c4f3e1ef489ca41"
 
 [[projects]]
   branch = "master"
@@ -74,11 +74,11 @@
     ".",
     "internal/testconn"
   ]
-  revision = "fc71119dfd03ed44d0aba09806e4a7d1584b74b1"
+  revision = "ee6eb7ef6e2355b46a573b0b1799f76259f2ea47"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7c743defd623795eff4a690aaf4d7651db81fae6e00d2e432b1ee18d132377c4"
+  inputs-digest = "6f11b6cba49c265cac76688eba9003e74961def4603f7dfab086f7a996032fd8"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -31,9 +31,10 @@ import (
 	"time"
 
 	"github.com/Azure/azure-amqp-common-go"
+	"github.com/Azure/azure-amqp-common-go/internal/tracing"
+	"github.com/Azure/azure-amqp-common-go/log"
 	"github.com/Azure/azure-amqp-common-go/uuid"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"pack.ag/amqp"
 )
 
@@ -102,24 +103,30 @@ func NewLink(conn *amqp.Client, address string) (*Link, error) {
 
 // RetryableRPC attempts to retry a request a number of times with delay
 func (l *Link) RetryableRPC(ctx context.Context, times int, delay time.Duration, msg *amqp.Message) (*Response, error) {
+	span, ctx := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.RetryableRPC")
+	span.Finish()
+
 	res, err := common.Retry(times, delay, func() (interface{}, error) {
+		span, ctx := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.RetryableRPC.retry")
+		span.Finish()
+
 		res, err := l.RPC(ctx, msg)
 		if err != nil {
-			log.Debugf("error in RPC via link %s: %v", l.id, err)
+			log.For(ctx).Error(errors.New(fmt.Sprintf("error in RPC via link %s: %v", l.id, err)))
 			return nil, err
 		}
 
 		switch {
 		case res.Code >= 200 && res.Code < 300:
-			log.Debugf("successful rpc on link %s: status code %d and description: %s", l.id, res.Code, res.Description)
+			log.For(ctx).Debug(fmt.Sprintf("successful rpc on link %s: status code %d and description: %s", l.id, res.Code, res.Description))
 			return res, nil
 		case res.Code >= 500:
 			errMessage := fmt.Sprintf("server error link %s: status code %d and description: %s", l.id, res.Code, res.Description)
-			log.Debugln(errMessage)
+			log.For(ctx).Error(errors.New(errMessage))
 			return nil, common.Retryable(errMessage)
 		default:
 			errMessage := fmt.Sprintf("unhandled error link %s: status code %d and description: %s", l.id, res.Code, res.Description)
-			log.Debugln(errMessage)
+			log.For(ctx).Error(errors.New(errMessage))
 			return nil, common.Retryable(errMessage)
 		}
 	})
@@ -133,6 +140,9 @@ func (l *Link) RetryableRPC(ctx context.Context, times int, delay time.Duration,
 func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 	l.rpcMu.Lock()
 	defer l.rpcMu.Unlock()
+
+	span, ctx := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.RPC")
+	span.Finish()
 
 	if msg.Properties == nil {
 		msg.Properties = &amqp.MessageProperties{}
@@ -167,38 +177,47 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 }
 
 // Close the link receiver, sender and session
-func (l *Link) Close() error {
-	if err := l.closeReceiver(); err != nil {
-		_ = l.closeSender()
-		_ = l.closeSession()
+func (l *Link) Close(ctx context.Context) error {
+	span, ctx := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.Close")
+	span.Finish()
+
+	if err := l.closeReceiver(ctx); err != nil {
+		_ = l.closeSender(ctx)
+		_ = l.closeSession(ctx)
 		return err
 	}
 
-	if err := l.closeSender(); err != nil {
-		_ = l.closeSession()
+	if err := l.closeSender(ctx); err != nil {
+		_ = l.closeSession(ctx)
 		return err
 	}
 
-	return l.closeSession()
+	return l.closeSession(ctx)
 }
 
-func (l *Link) closeReceiver() error {
+func (l *Link) closeReceiver(ctx context.Context) error {
+	span, ctx := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.closeReceiver")
+	span.Finish()
 	if l.receiver != nil {
-		return l.receiver.Close()
+		return l.receiver.Close(ctx)
 	}
 	return nil
 }
 
-func (l *Link) closeSender() error {
+func (l *Link) closeSender(ctx context.Context) error {
+	span, ctx := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.closeSender")
+	span.Finish()
 	if l.sender != nil {
-		return l.sender.Close()
+		return l.sender.Close(ctx)
 	}
 	return nil
 }
 
-func (l *Link) closeSession() error {
+func (l *Link) closeSession(ctx context.Context) error {
+	span, ctx := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.closeSession")
+	span.Finish()
 	if l.session != nil {
-		return l.session.Close()
+		return l.session.Close(ctx)
 	}
 	return nil
 }

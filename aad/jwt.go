@@ -36,7 +36,6 @@ import (
 	"github.com/Azure/azure-amqp-common-go/auth"
 	"github.com/Azure/go-autorest/autorest/adal"
 	"github.com/Azure/go-autorest/autorest/azure"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/pkcs12"
 )
 
@@ -153,7 +152,6 @@ func (c *TokenProviderConfiguration) NewServicePrincipalToken() (*adal.ServicePr
 
 	// 1.Client Credentials
 	if c.ClientSecret != "" {
-		log.Debug("creating a token via a service principal client secret")
 		spToken, err := adal.NewServicePrincipalToken(*oauthConfig, c.ClientID, c.ClientSecret, c.ResourceURI)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get oauth token from client credentials: %v", err)
@@ -166,7 +164,6 @@ func (c *TokenProviderConfiguration) NewServicePrincipalToken() (*adal.ServicePr
 
 	// 2. Client Certificate
 	if c.CertificatePath != "" {
-		log.Debug("creating a token via a service principal client certificate")
 		certData, err := ioutil.ReadFile(c.CertificatePath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read the certificate file (%s): %v", c.CertificatePath, err)
@@ -186,7 +183,6 @@ func (c *TokenProviderConfiguration) NewServicePrincipalToken() (*adal.ServicePr
 	}
 
 	// 3. By default return MSI
-	log.Debug("creating a token via MSI")
 	msiEndpoint, err := adal.GetMSIVMEndpoint()
 	if err != nil {
 		return nil, err
@@ -206,19 +202,15 @@ func (t *TokenProvider) GetToken(audience string) (*auth.Token, error) {
 	token := t.tokenProvider.Token()
 	expireTicks, err := strconv.ParseInt(token.ExpiresOn, 10, 64)
 	if err != nil {
-		log.Debugf("%v", token.AccessToken)
 		return nil, err
 	}
 	expires := time.Unix(expireTicks, 0)
 
 	if expires.Before(time.Now()) {
-		log.Debug("refreshing AAD token since it has expired")
 		if err := t.tokenProvider.Refresh(); err != nil {
-			log.Error("refreshing AAD token has failed")
 			return nil, err
 		}
 		token = t.tokenProvider.Token()
-		log.Debug("refreshing AAD token has succeeded")
 	}
 
 	return auth.NewToken(auth.CBSTokenTypeJWT, token.AccessToken, token.ExpiresOn), nil
