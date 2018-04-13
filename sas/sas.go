@@ -43,9 +43,8 @@ import (
 type (
 	// Signer provides SAS token generation for use in Service Bus and Event Hub
 	Signer struct {
-		namespace string
-		keyName   string
-		key       string
+		keyName string
+		key     string
 	}
 
 	// TokenProvider is a SAS claims-based security token provider
@@ -78,28 +77,27 @@ func TokenProviderWithEnvironmentVars() TokenProviderOption {
 			if err != nil {
 				return err
 			}
-			provider.signer = NewSigner(parsed.Namespace, parsed.KeyName, parsed.Key)
+			provider.signer = NewSigner(parsed.KeyName, parsed.Key)
 			return nil
 		}
 
 		var (
-			keyName   = os.Getenv("EVENTHUB_KEY_NAME")
-			keyValue  = os.Getenv("EVENTHUB_KEY_VALUE")
-			namespace = os.Getenv("EVENTHUB_NAMESPACE")
+			keyName  = os.Getenv("EVENTHUB_KEY_NAME")
+			keyValue = os.Getenv("EVENTHUB_KEY_VALUE")
 		)
 
-		if keyName == "" || keyValue == "" || namespace == "" {
-			return errors.New("unable to build SAS token provider because (EVENTHUB_KEY_NAME, EVENTHUB_KEY_VALUE and EVENTHUB_NAMESPACE) were empty, and EVENTHUB_CONNECTION_STRING was empty")
+		if keyName == "" || keyValue == "" {
+			return errors.New("unable to build SAS token provider because (EVENTHUB_KEY_NAME and EVENTHUB_KEY_VALUE) were empty, and EVENTHUB_CONNECTION_STRING was empty")
 		}
-		provider.signer = NewSigner(namespace, keyName, keyValue)
+		provider.signer = NewSigner(keyName, keyValue)
 		return nil
 	}
 }
 
 // TokenProviderWithNamespaceAndKey configures a SAS TokenProvider to use the given namespace and key combination for signing
-func TokenProviderWithNamespaceAndKey(namespace, keyName, key string) TokenProviderOption {
+func TokenProviderWithKey(keyName, key string) TokenProviderOption {
 	return func(provider *TokenProvider) error {
-		provider.signer = NewSigner(namespace, keyName, key)
+		provider.signer = NewSigner(keyName, key)
 		return nil
 	}
 }
@@ -123,11 +121,10 @@ func (t *TokenProvider) GetToken(audience string) (*auth.Token, error) {
 }
 
 // NewSigner builds a new SAS signer for use in generation Service Bus and Event Hub SAS tokens
-func NewSigner(namespace, keyName, key string) *Signer {
+func NewSigner(keyName, key string) *Signer {
 	return &Signer{
-		namespace: namespace,
-		keyName:   keyName,
-		key:       key,
+		keyName: keyName,
+		key:     key,
 	}
 }
 
@@ -142,6 +139,9 @@ func (s *Signer) SignWithExpiry(uri, expiry string) string {
 	audience := strings.ToLower(url.QueryEscape(uri))
 	sts := stringToSign(audience, expiry)
 	sig := s.signString(sts)
+	if s.keyName == "" {
+		return fmt.Sprintf("SharedAccessSignature sr=%s&sig=%s&se=%s", audience, sig, expiry)
+	}
 	return fmt.Sprintf("SharedAccessSignature sr=%s&sig=%s&se=%s&skn=%s", audience, sig, expiry, s.keyName)
 }
 
