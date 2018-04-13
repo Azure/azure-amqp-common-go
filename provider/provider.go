@@ -34,6 +34,7 @@ import (
 )
 
 type (
+	// Provider provides AMQP connections with authentication using the provided TokenProvider
 	Provider struct {
 		Endpoint      string
 		TokenProvider auth.TokenProvider
@@ -41,6 +42,7 @@ type (
 	}
 )
 
+// New creates a new AMQP connection Provider that connects to the endpoint provided with authentication from the tokenProvider
 func New(endpoint string, tokenProvider auth.TokenProvider) *Provider {
 	p := &Provider{
 		Endpoint:      endpoint,
@@ -51,6 +53,7 @@ func New(endpoint string, tokenProvider auth.TokenProvider) *Provider {
 	return p
 }
 
+// NewConnection generates a new AMQP connection
 func (p *Provider) NewConnection() (*amqp.Client, error) {
 	return amqp.Dial(p.GetAmqpHostURI(),
 		amqp.ConnSASLAnonymous(),
@@ -62,15 +65,18 @@ func (p *Provider) NewConnection() (*amqp.Client, error) {
 	)
 }
 
+// NegotiateClaim authenticates the the connection over CBS
 func (p *Provider) NegotiateClaim(ctx context.Context, conn *amqp.Client, entityPath string) error {
 	audience := p.GetEntityAudience(entityPath)
 	return cbs.NegotiateClaim(ctx, audience, conn, p.TokenProvider)
 }
 
+// GetAmqpHostURI gets the host URI of the AMQP connection
 func (p *Provider) GetAmqpHostURI() string {
 	return "amqps://" + p.Endpoint + "/"
 }
 
+// GetEntityAudience gets the audience for a given entity path
 func (p *Provider) GetEntityAudience(entityPath string) string {
 	return p.Endpoint + "/" + entityPath
 }

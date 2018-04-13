@@ -94,7 +94,7 @@ func TokenProviderWithEnvironmentVars() TokenProviderOption {
 	}
 }
 
-// TokenProviderWithNamespaceAndKey configures a SAS TokenProvider to use the given namespace and key combination for signing
+// TokenProviderWithKey configures a SAS TokenProvider to use the given key and keyName combination for signing
 func TokenProviderWithKey(keyName, key string) TokenProviderOption {
 	return func(provider *TokenProvider) error {
 		provider.signer = NewSigner(keyName, key)
