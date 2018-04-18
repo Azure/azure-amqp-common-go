@@ -45,7 +45,7 @@ func Retry(times int, delay time.Duration, action func() (interface{}, error)) (
 				time.Sleep(delay)
 				continue
 			} else {
-				return nil, retryable
+				return nil, err
 			}
 		}
 		return item, nil
