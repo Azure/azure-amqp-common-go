@@ -40,12 +40,12 @@ func Retry(times int, delay time.Duration, action func() (interface{}, error)) (
 	for i := 0; i < times; i++ {
 		item, err := action()
 		if err != nil {
-			if err, ok := err.(Retryable); ok {
-				lastErr = err
+			if retryable, ok := err.(Retryable); ok {
+				lastErr = retryable
 				time.Sleep(delay)
 				continue
 			} else {
-				return nil, err
+				return nil, retryable
 			}
 		}
 		return item, nil

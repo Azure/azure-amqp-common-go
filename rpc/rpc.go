@@ -104,11 +104,11 @@ func NewLink(conn *amqp.Client, address string) (*Link, error) {
 // RetryableRPC attempts to retry a request a number of times with delay
 func (l *Link) RetryableRPC(ctx context.Context, times int, delay time.Duration, msg *amqp.Message) (*Response, error) {
 	span, ctx := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.RetryableRPC")
-	span.Finish()
+	defer span.Finish()
 
 	res, err := common.Retry(times, delay, func() (interface{}, error) {
 		span, ctx := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.RetryableRPC.retry")
-		span.Finish()
+		defer span.Finish()
 
 		res, err := l.RPC(ctx, msg)
 		if err != nil {
@@ -142,7 +142,7 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 	defer l.rpcMu.Unlock()
 
 	span, ctx := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.RPC")
-	span.Finish()
+	defer span.Finish()
 
 	if msg.Properties == nil {
 		msg.Properties = &amqp.MessageProperties{}
@@ -179,7 +179,7 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 // Close the link receiver, sender and session
 func (l *Link) Close(ctx context.Context) error {
 	span, ctx := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.Close")
-	span.Finish()
+	defer span.Finish()
 
 	if err := l.closeReceiver(ctx); err != nil {
 		_ = l.closeSender(ctx)
@@ -197,7 +197,8 @@ func (l *Link) Close(ctx context.Context) error {
 
 func (l *Link) closeReceiver(ctx context.Context) error {
 	span, ctx := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.closeReceiver")
-	span.Finish()
+	defer span.Finish()
+
 	if l.receiver != nil {
 		return l.receiver.Close(ctx)
 	}
@@ -206,7 +207,8 @@ func (l *Link) closeReceiver(ctx context.Context) error {
 
 func (l *Link) closeSender(ctx context.Context) error {
 	span, ctx := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.closeSender")
-	span.Finish()
+	defer span.Finish()
+
 	if l.sender != nil {
 		return l.sender.Close(ctx)
 	}
@@ -215,7 +217,8 @@ func (l *Link) closeSender(ctx context.Context) error {
 
 func (l *Link) closeSession(ctx context.Context) error {
 	span, ctx := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.closeSession")
-	span.Finish()
+	defer span.Finish()
+
 	if l.session != nil {
 		return l.session.Close(ctx)
 	}

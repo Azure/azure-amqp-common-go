@@ -1,6 +1,8 @@
 # Change Log
 
-## `master`
+## `v0.3.1`
+- Fix missing defer on spans
+- Return error on retry. Was returning nil if not retryable.
 
 ## `v0.3.0`
 - add opentracing support
