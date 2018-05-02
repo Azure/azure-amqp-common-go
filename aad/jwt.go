@@ -121,7 +121,7 @@ func JWTProviderWithAADToken(aadToken *adal.ServicePrincipalToken) JWTProviderOp
 }
 
 // NewJWTProvider builds an Azure Active Directory claims-based security token provider
-func NewJWTProvider(opts ...JWTProviderOption) (auth.TokenProvider, error) {
+func NewJWTProvider(opts ...JWTProviderOption) (*TokenProvider, error) {
 	config := &TokenProviderConfiguration{
 		ResourceURI: eventhubResourceURI,
 	}
