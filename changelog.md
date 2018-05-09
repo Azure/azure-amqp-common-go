@@ -1,5 +1,8 @@
 # Change Log
 
+## `v0.4.0`
+- **Breaking Change** remove namespace from SAS provider and return struct rather than interface 
+
 ## `v0.3.2`
 - Return error on retry. Was returning nil if not retryable.
 
