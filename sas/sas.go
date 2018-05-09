@@ -43,9 +43,8 @@ import (
 type (
 	// Signer provides SAS token generation for use in Service Bus and Event Hub
 	Signer struct {
-		namespace string
-		keyName   string
-		key       string
+		KeyName string
+		Key     string
 	}
 
 	// TokenProvider is a SAS claims-based security token provider
@@ -62,7 +61,6 @@ type (
 // There are two sets of environment variables which can produce a SAS TokenProvider
 //
 // 1) Expected Environment Variables:
-//   - "EVENTHUB_NAMESPACE" the namespace of the Event Hub instance
 //   - "EVENTHUB_KEY_NAME" the name of the Event Hub key
 //   - "EVENTHUB_KEY_VALUE" the secret for the Event Hub key named in "EVENTHUB_KEY_NAME"
 //
@@ -78,34 +76,33 @@ func TokenProviderWithEnvironmentVars() TokenProviderOption {
 			if err != nil {
 				return err
 			}
-			provider.signer = NewSigner(parsed.Namespace, parsed.KeyName, parsed.Key)
+			provider.signer = NewSigner(parsed.KeyName, parsed.Key)
 			return nil
 		}
 
 		var (
-			keyName   = os.Getenv("EVENTHUB_KEY_NAME")
-			keyValue  = os.Getenv("EVENTHUB_KEY_VALUE")
-			namespace = os.Getenv("EVENTHUB_NAMESPACE")
+			keyName  = os.Getenv("EVENTHUB_KEY_NAME")
+			keyValue = os.Getenv("EVENTHUB_KEY_VALUE")
 		)
 
-		if keyName == "" || keyValue == "" || namespace == "" {
-			return errors.New("unable to build SAS token provider because (EVENTHUB_KEY_NAME, EVENTHUB_KEY_VALUE and EVENTHUB_NAMESPACE) were empty, and EVENTHUB_CONNECTION_STRING was empty")
+		if keyName == "" || keyValue == "" {
+			return errors.New("unable to build SAS token provider because (EVENTHUB_KEY_NAME and EVENTHUB_KEY_VALUE) were empty, and EVENTHUB_CONNECTION_STRING was empty")
 		}
-		provider.signer = NewSigner(namespace, keyName, keyValue)
+		provider.signer = NewSigner(keyName, keyValue)
 		return nil
 	}
 }
 
-// TokenProviderWithNamespaceAndKey configures a SAS TokenProvider to use the given namespace and key combination for signing
-func TokenProviderWithNamespaceAndKey(namespace, keyName, key string) TokenProviderOption {
+// TokenProviderWithKey configures a SAS TokenProvider to use the given key name and key (secret) for signing
+func TokenProviderWithKey(keyName, key string) TokenProviderOption {
 	return func(provider *TokenProvider) error {
-		provider.signer = NewSigner(namespace, keyName, key)
+		provider.signer = NewSigner(keyName, key)
 		return nil
 	}
 }
 
 // NewTokenProvider builds a SAS claims-based security token provider
-func NewTokenProvider(opts ...TokenProviderOption) (auth.TokenProvider, error) {
+func NewTokenProvider(opts ...TokenProviderOption) (*TokenProvider, error) {
 	provider := new(TokenProvider)
 	for _, opt := range opts {
 		err := opt(provider)
@@ -118,22 +115,21 @@ func NewTokenProvider(opts ...TokenProviderOption) (auth.TokenProvider, error) {
 
 // GetToken gets a CBS SAS token
 func (t *TokenProvider) GetToken(audience string) (*auth.Token, error) {
-	signed, expiry := t.signer.SignWithDuration(audience, 2*time.Hour)
-	return auth.NewToken(auth.CBSTokenTypeSAS, signed, expiry), nil
+	signature, expiry := t.signer.SignWithDuration(audience, 2*time.Hour)
+	return auth.NewToken(auth.CBSTokenTypeSAS, signature, expiry), nil
 }
 
 // NewSigner builds a new SAS signer for use in generation Service Bus and Event Hub SAS tokens
-func NewSigner(namespace, keyName, key string) *Signer {
+func NewSigner(keyName, key string) *Signer {
 	return &Signer{
-		namespace: namespace,
-		keyName:   keyName,
-		key:       key,
+		KeyName: keyName,
+		Key:     key,
 	}
 }
 
 // SignWithDuration signs a given for a period of time from now
-func (s *Signer) SignWithDuration(uri string, interval time.Duration) (signed, expiry string) {
-	expiry = signatureExpiry(time.Now(), interval)
+func (s *Signer) SignWithDuration(uri string, interval time.Duration) (signature, expiry string) {
+	expiry = signatureExpiry(time.Now().UTC(), interval)
 	return s.SignWithExpiry(uri, expiry), expiry
 }
 
@@ -142,7 +138,7 @@ func (s *Signer) SignWithExpiry(uri, expiry string) string {
 	audience := strings.ToLower(url.QueryEscape(uri))
 	sts := stringToSign(audience, expiry)
 	sig := s.signString(sts)
-	return fmt.Sprintf("SharedAccessSignature sr=%s&sig=%s&se=%s&skn=%s", audience, sig, expiry, s.keyName)
+	return fmt.Sprintf("SharedAccessSignature sr=%s&sig=%s&se=%s&skn=%s", audience, sig, expiry, s.KeyName)
 }
 
 func signatureExpiry(from time.Time, interval time.Duration) string {
@@ -155,7 +151,7 @@ func stringToSign(uri, expiry string) string {
 }
 
 func (s *Signer) signString(str string) string {
-	h := hmac.New(sha256.New, []byte(s.key))
+	h := hmac.New(sha256.New, []byte(s.Key))
 	h.Write([]byte(str))
 	encodedSig := base64.StdEncoding.EncodeToString(h.Sum(nil))
 	return url.QueryEscape(encodedSig)
