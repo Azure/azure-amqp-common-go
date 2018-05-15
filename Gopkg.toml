@@ -4,4 +4,4 @@
 
 [[constraint]]
     name = "pack.ag/amqp"
-    branch = "master"
+    version = "0.5"
