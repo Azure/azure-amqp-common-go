@@ -1,5 +1,8 @@
 # Change Log
 
+## `v0.5.0`
+- **Breaking Change** lock dependency to AMQP
+
 ## `v0.4.0`
 - **Breaking Change** remove namespace from SAS provider and return struct rather than interface 
 
