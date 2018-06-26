@@ -29,41 +29,50 @@ import (
 )
 
 const (
-	namespace = "mynamespace"
-	keyName   = "keyName"
-	secret    = "superSecret="
-	hubName   = "myhub"
-	connStr1  = "Endpoint=sb://" + namespace + ".servicebus.windows.net/;SharedAccessKeyName=" + keyName + ";SharedAccessKey=" + secret + ";EntityPath=" + hubName
-	connStr2  = "Endpoint=sb://" + namespace + ".servicebus.windows.net/;SharedAccessKeyName=" + keyName + ";SharedAccessKey=" + secret
-	connStr3  = "endpoint=sb://" + namespace + ".servicebus.windows.net/;SharedAccesskeyName=" + keyName + ";sharedAccessKey=" + secret + ";Entitypath=" + hubName
+	namespace    = "mynamespace"
+	keyName      = "keyName"
+	secret       = "superSecret="
+	hubName      = "myhub"
+	happyConnStr = "Endpoint=sb://" + namespace + ".servicebus.windows.net/;SharedAccessKeyName=" + keyName + ";SharedAccessKey=" + secret + ";EntityPath=" + hubName
+	noEntityPath = "Endpoint=sb://" + namespace + ".servicebus.windows.net/;SharedAccessKeyName=" + keyName + ";SharedAccessKey=" + secret
+	lowerCase    = "endpoint=sb://" + namespace + ".servicebus.windows.net/;SharedAccesskeyName=" + keyName + ";sharedAccessKey=" + secret + ";Entitypath=" + hubName
+	noEndpoint   = "NoEndpoint=Blah"
 )
 
 func TestParsedConnectionFromStr(t *testing.T) {
-	parsed, err := ParsedConnectionFromStr(connStr1)
-	assert.Nil(t, err)
-	assert.Equal(t, "amqps://"+namespace+".servicebus.windows.net", parsed.Host)
-	assert.Equal(t, namespace, parsed.Namespace)
-	assert.Equal(t, keyName, parsed.KeyName)
-	assert.Equal(t, secret, parsed.Key)
-	assert.Equal(t, hubName, parsed.HubName)
+	parsed, err := ParsedConnectionFromStr(happyConnStr)
+	if assert.NoError(t, err) {
+		assert.Equal(t, "amqps://"+namespace+".servicebus.windows.net", parsed.Host)
+		assert.Equal(t, namespace, parsed.Namespace)
+		assert.Equal(t, keyName, parsed.KeyName)
+		assert.Equal(t, secret, parsed.Key)
+		assert.Equal(t, hubName, parsed.HubName)
+	}
 }
 
 func TestParsedConnectionFromStrCaseIndifference(t *testing.T) {
-	parsed, err := ParsedConnectionFromStr(connStr3)
-	assert.Nil(t, err)
-	assert.Equal(t, "amqps://"+namespace+".servicebus.windows.net", parsed.Host)
-	assert.Equal(t, namespace, parsed.Namespace)
-	assert.Equal(t, keyName, parsed.KeyName)
-	assert.Equal(t, secret, parsed.Key)
-	assert.Equal(t, hubName, parsed.HubName)
+	parsed, err := ParsedConnectionFromStr(lowerCase)
+	if assert.NoError(t, err) {
+		assert.Equal(t, "amqps://"+namespace+".servicebus.windows.net", parsed.Host)
+		assert.Equal(t, namespace, parsed.Namespace)
+		assert.Equal(t, keyName, parsed.KeyName)
+		assert.Equal(t, secret, parsed.Key)
+		assert.Equal(t, hubName, parsed.HubName)
+	}
 }
 
 func TestParsedConnectionFromStrWithoutEntityPath(t *testing.T) {
-	parsed, err := ParsedConnectionFromStr(connStr2)
-	assert.Nil(t, err)
-	assert.Equal(t, "amqps://"+namespace+".servicebus.windows.net", parsed.Host)
-	assert.Equal(t, namespace, parsed.Namespace)
-	assert.Equal(t, keyName, parsed.KeyName)
-	assert.Equal(t, secret, parsed.Key)
-	assert.Equal(t, "", parsed.HubName)
+	parsed, err := ParsedConnectionFromStr(noEntityPath)
+	if assert.NoError(t, err) {
+		assert.Equal(t, "amqps://"+namespace+".servicebus.windows.net", parsed.Host)
+		assert.Equal(t, namespace, parsed.Namespace)
+		assert.Equal(t, keyName, parsed.KeyName)
+		assert.Equal(t, secret, parsed.Key)
+		assert.Equal(t, "", parsed.HubName)
+	}
+}
+
+func TestFailedParsedConnectionFromStrWithoutEndpoint(t *testing.T) {
+	_, err := ParsedConnectionFromStr(noEndpoint)
+	assert.Error(t, err)
 }

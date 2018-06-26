@@ -25,6 +25,7 @@ package rpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -34,7 +35,6 @@ import (
 	"github.com/Azure/azure-amqp-common-go/internal/tracing"
 	"github.com/Azure/azure-amqp-common-go/log"
 	"github.com/Azure/azure-amqp-common-go/uuid"
-	"github.com/pkg/errors"
 	"pack.ag/amqp"
 )
 
@@ -85,8 +85,10 @@ func NewLink(conn *amqp.Client, address string) (*Link, error) {
 	id := linkID.String()
 	clientAddress := strings.Replace("$", "", address, -1) + replyPostfix + id
 	authReceiver, err := authSession.NewReceiver(
+		amqp.LinkSenderSettle(amqp.ModeMixed),
 		amqp.LinkSourceAddress(address),
 		amqp.LinkTargetAddress(clientAddress),
+		amqp.LinkReceiverSettle(amqp.ModeSecond),
 	)
 	if err != nil {
 		return nil, err
@@ -112,7 +114,7 @@ func (l *Link) RetryableRPC(ctx context.Context, times int, delay time.Duration,
 
 		res, err := l.RPC(ctx, msg)
 		if err != nil {
-			log.For(ctx).Error(errors.New(fmt.Sprintf("error in RPC via link %s: %v", l.id, err)))
+			log.For(ctx).Error(fmt.Errorf("error in RPC via link %s: %v", l.id, err))
 			return nil, err
 		}
 
@@ -168,6 +170,8 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 	if !ok {
 		return nil, errors.New("description was not found on rpc message")
 	}
+
+	res.Accept()
 
 	return &Response{
 		Code:        int(statusCode),
