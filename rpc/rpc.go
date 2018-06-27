@@ -71,7 +71,6 @@ func NewLink(conn *amqp.Client, address string) (*Link, error) {
 	}
 
 	authSender, err := authSession.NewSender(
-		amqp.LinkSenderSettle(amqp.ModeMixed),
 		amqp.LinkTargetAddress(address),
 	)
 	if err != nil {
@@ -86,10 +85,8 @@ func NewLink(conn *amqp.Client, address string) (*Link, error) {
 	id := linkID.String()
 	clientAddress := strings.Replace("$", "", address, -1) + replyPostfix + id
 	authReceiver, err := authSession.NewReceiver(
-		amqp.LinkSenderSettle(amqp.ModeUnsettled),
 		amqp.LinkSourceAddress(address),
 		amqp.LinkTargetAddress(clientAddress),
-		amqp.LinkReceiverSettle(amqp.ModeSecond),
 	)
 	if err != nil {
 		return nil, err
