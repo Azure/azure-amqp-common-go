@@ -1,5 +1,9 @@
 # Change Log
 
+## `v0.6.0`
+- **Breaking Change** change the parse connection signature and make it more strict
+- fix errors imports
+
 ## `v0.5.0`
 - **Breaking Change** lock dependency to AMQP
 
