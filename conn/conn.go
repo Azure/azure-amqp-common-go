@@ -24,6 +24,7 @@ package conn
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"strings"
 )
@@ -48,7 +49,7 @@ type (
 )
 
 // newParsedConnection is a constructor for a parsedConn and verifies each of the inputs is non-null.
-func newParsedConnection(namespace, suffix, hubName, keyName, key string) (*ParsedConn, error) {
+func newParsedConnection(namespace, suffix, hubName, keyName, key string) *ParsedConn {
 	return &ParsedConn{
 		Host:      "amqps://" + namespace + "." + suffix,
 		Suffix:    suffix,
@@ -56,10 +57,11 @@ func newParsedConnection(namespace, suffix, hubName, keyName, key string) (*Pars
 		KeyName:   keyName,
 		Key:       key,
 		HubName:   hubName,
-	}, nil
+	}
 }
 
 // ParsedConnectionFromStr takes a string connection string from the Azure portal and returns the parsed representation.
+// The method will return an error if the Endpoint, SharedAccessKeyName or SharedAccessKey is empty.
 func ParsedConnectionFromStr(connStr string) (*ParsedConn, error) {
 	var namespace, suffix, hubName, keyName, secret string
 	splits := strings.Split(connStr, ";")
@@ -92,5 +94,19 @@ func ParsedConnectionFromStr(connStr string) (*ParsedConn, error) {
 			hubName = value
 		}
 	}
-	return newParsedConnection(namespace, suffix, hubName, keyName, secret)
+
+	parsed := newParsedConnection(namespace, suffix, hubName, keyName, secret)
+	if namespace == "" {
+		return parsed, fmt.Errorf("key %q must not be empty", endpointKey)
+	}
+
+	if keyName == "" {
+		return parsed, fmt.Errorf("key %q must not be empty", sharedAccessKeyNameKey)
+	}
+
+	if secret == "" {
+		return parsed, fmt.Errorf("key %q must not be empty", sharedAccessKeyKey)
+	}
+
+	return parsed, nil
 }

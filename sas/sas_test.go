@@ -1,13 +1,13 @@
 package sas
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,9 +30,7 @@ func TestNewSigner(t *testing.T) {
 	before := time.Now().UTC().Add(-2 * time.Second)
 	sigStr, expiry := signer.SignWithDuration("http://microsoft.com", 1*time.Hour)
 	nixExpiry, err := strconv.ParseInt(expiry, 10, 64)
-	assert.True(t, time.Now().UTC().Add(1*time.Hour).After(time.Unix(nixExpiry, 0)), "now + 1 hour is after")
-	fmt.Println(before, time.Unix(nixExpiry, 0).UTC(), time.Now().UTC())
-	assert.True(t, before.Add(1*time.Hour).Before(time.Unix(nixExpiry, 0)), "before signing + 1 hour is before")
+	assert.WithinDuration(t, before.Add(1*time.Hour), time.Unix(nixExpiry, 0), 10*time.Second, "signing expiry")
 
 	sig, err := parseSig(sigStr)
 	assert.Nil(t, err)
@@ -64,7 +62,7 @@ func parseSig(sigStr string) (*sig, error) {
 		case "skn":
 			parsed.skn = keyValue[1]
 		default:
-			return nil, errors.New(fmt.Sprintf("unknown key / value: %q", keyValue))
+			return nil, fmt.Errorf(fmt.Sprintf("unknown key / value: %q", keyValue))
 		}
 	}
 	return parsed, nil

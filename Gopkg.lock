@@ -9,8 +9,8 @@
     "autorest/azure",
     "autorest/date"
   ]
-  revision = "eaa7994b2278094c904d31993d26f56324db3052"
-  version = "v10.8.1"
+  revision = "e6d2a85bbb5cd2a3162e4942594e1e520e442b0b"
+  version = "v10.11.4"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -49,8 +49,8 @@
 [[projects]]
   name = "github.com/stretchr/testify"
   packages = ["assert"]
-  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
-  version = "v1.2.1"
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
 
 [[projects]]
   branch = "master"
@@ -59,13 +59,13 @@
     "pkcs12",
     "pkcs12/internal/rc2"
   ]
-  revision = "1a580b3eff7814fc9b40602fd35256c63b50f491"
+  revision = "a49355c7e3f8fe157a85be2f77e6e269a0f89602"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "2491c5de3490fced2f6cff376127c667efeed857"
+  revision = "afe8f62b1d6bbd81f31868121a50b06d8188e1f9"
 
 [[projects]]
   name = "pack.ag/amqp"
@@ -73,12 +73,12 @@
     ".",
     "internal/testconn"
   ]
-  revision = "390d7eaeac0368026b93a13f4f7bc30d903c61cd"
-  version = "v0.5.0"
+  revision = "751cf0d4eb77d69534dabeff0f3afb2a0eb8588c"
+  version = "v0.6.2"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f9f1060e3c7ee71bbd01a70776552b36abf3ee85145a9961148a76a0da7e3e2f"
+  inputs-digest = "8d3d96dbb34de16e864669c556532e5054517d33ec27b9a51d38caa808a4674f"
   solver-name = "gps-cdcl"
   solver-version = 1

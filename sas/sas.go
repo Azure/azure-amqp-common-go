@@ -28,6 +28,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -37,7 +38,6 @@ import (
 
 	"github.com/Azure/azure-amqp-common-go/auth"
 	"github.com/Azure/azure-amqp-common-go/conn"
-	"github.com/pkg/errors"
 )
 
 type (
