@@ -73,12 +73,12 @@
     ".",
     "internal/testconn"
   ]
-  revision = "751cf0d4eb77d69534dabeff0f3afb2a0eb8588c"
-  version = "v0.6.2"
+  revision = "4b9cda815aa2612789543484d4e29855c791eeeb"
+  version = "v0.7.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8d3d96dbb34de16e864669c556532e5054517d33ec27b9a51d38caa808a4674f"
+  inputs-digest = "d5aeb715fb95e3e1009b985128ef8eb1c184290f56d5b74392f05c0dd39cb02b"
   solver-name = "gps-cdcl"
   solver-version = 1
