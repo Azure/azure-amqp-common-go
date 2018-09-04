@@ -1,5 +1,8 @@
 # Change Log
 
+## `v1.0.1`
+- bump version constant
+
 ## `v1.0.0`
 - moved to opencensus from opentracing
 - committing to backward compatibility
