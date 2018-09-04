@@ -48,7 +48,7 @@ const (
 // NegotiateClaim attempts to put a token to the $cbs management endpoint to negotiate auth for the given audience
 func NegotiateClaim(ctx context.Context, audience string, conn *amqp.Client, provider auth.TokenProvider) error {
 	span, ctx := tracing.StartSpanFromContext(ctx, "az-amqp-common.cbs.NegotiateClaim")
-	defer span.Finish()
+	defer span.End()
 
 	link, err := rpc.NewLink(conn, cbsAddress)
 	if err != nil {

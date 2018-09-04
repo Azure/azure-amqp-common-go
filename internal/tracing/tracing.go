@@ -5,27 +5,27 @@ import (
 	"os"
 
 	"github.com/Azure/azure-amqp-common-go/internal"
-	"github.com/opentracing/opentracing-go"
-	tag "github.com/opentracing/opentracing-go/ext"
+	"go.opencensus.io/trace"
 )
 
 // StartSpanFromContext starts a span given a context and applies common library information
-func StartSpanFromContext(ctx context.Context, operationName string, opts ...opentracing.StartSpanOption) (opentracing.Span, context.Context) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, operationName, opts...)
+func StartSpanFromContext(ctx context.Context, operationName string, opts ...trace.StartOption) (*trace.Span, context.Context) {
+	ctx, span := trace.StartSpan(ctx, operationName, opts...)
 	ApplyComponentInfo(span)
 	return span, ctx
 }
 
-// ApplyComponentInfo applies amqp common library and network info to the span
-func ApplyComponentInfo(span opentracing.Span) {
-	tag.Component.Set(span, "github.com/Azure/azure-amqp-common-go")
-	span.SetTag("version", common.Version)
+// ApplyComponentInfo applies eventhub library and network info to the span
+func ApplyComponentInfo(span *trace.Span) {
+	span.AddAttributes(
+		trace.StringAttribute("component", "github.com/Azure/azure-amqp-common-go"),
+		trace.StringAttribute("version", common.Version))
 	applyNetworkInfo(span)
 }
 
-func applyNetworkInfo(span opentracing.Span) {
+func applyNetworkInfo(span *trace.Span) {
 	hostname, err := os.Hostname()
 	if err == nil {
-		tag.PeerHostname.Set(span, hostname)
+		span.AddAttributes(trace.StringAttribute("peer.hostname", hostname))
 	}
 }
