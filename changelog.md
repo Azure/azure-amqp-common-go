@@ -1,5 +1,8 @@
 # Change Log
 
+## `v1.0.0`
+- no changes -- committing to backward compatibility
+
 ## `v0.7.0`
 - update AMQP dependency to 0.7.0
 
