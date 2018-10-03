@@ -159,14 +159,37 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 		return nil, err
 	}
 
-	statusCode, ok := res.ApplicationProperties[statusCodeKey].(int32)
-	if !ok {
+	var statusCode int
+	statusCodeCandidates := []string{statusCodeKey, "statusCode"}
+	for i := range statusCodeCandidates {
+		if rawStatusCode, ok := res.ApplicationProperties[statusCodeCandidates[i]]; ok {
+			if cast, ok := rawStatusCode.(int32); ok {
+				statusCode = int(cast)
+				break
+			} else {
+				return nil, errors.New("status code was not of expected type int32")
+			}
+		}
+	}
+	if statusCode == 0 {
 		return nil, errors.New("status codes was not found on rpc message")
 	}
 
-	description, ok := res.ApplicationProperties[descriptionKey].(string)
-	if !ok {
-		return nil, errors.New("description was not found on rpc message")
+	var description string
+	descriptionCandidates := []string{descriptionKey, "statusDescription"}
+	descriptionFound := false
+	for i := range descriptionCandidates {
+		if rawDescription, ok := res.ApplicationProperties[descriptionCandidates[i]]; ok {
+			descriptionFound = true
+			if description, ok = rawDescription.(string); ok {
+				break
+			} else {
+				return nil, errors.New("status description was not of expected type string")
+			}
+		}
+	}
+	if !descriptionFound {
+		return nil, errors.New("status description was not found on rpc message")
 	}
 
 	res.Accept()
