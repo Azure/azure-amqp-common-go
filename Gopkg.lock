@@ -2,7 +2,7 @@
 
 
 [[projects]]
-  digest = "1:ba5927f32e6b520f1844122cbac163926baa361a2087b80c928f17482eb09f51"
+  digest = "1:b931c74e90aa7e9681523d4ad55e69a25cb580df200e956b5941dba37d51bcaa"
   name = "github.com/Azure/go-autorest"
   packages = [
     "autorest",
@@ -13,8 +13,8 @@
     "version",
   ]
   pruneopts = "UT"
-  revision = "a35eae345f69bbfbe3b8fa0b1d3fe98f8430b21a"
-  version = "v10.15.3"
+  revision = "87f168d7649781e529653290e223c9c84b789c00"
+  version = "v11.0.0"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -78,18 +78,18 @@
     "pkcs12/internal/rc2",
   ]
   pruneopts = "UT"
-  revision = "0709b304e793a5edb4a2c0145f281ecdc20838a4"
+  revision = "e3636079e1a4c1f337f212cc5cd2aca108f6c900"
 
 [[projects]]
-  digest = "1:efd7f4a2c3339485190142d3b83052207aaadf6e4e724fdbac79a5de0a8120c5"
+  digest = "1:4739800ec9c08baa4abefa388a31ff74d9e3b3a9cf112fe312332c6e6c3d119d"
   name = "pack.ag/amqp"
   packages = [
     ".",
     "internal/testconn",
   ]
   pruneopts = "UT"
-  revision = "f04efab52fd05cbd1b25280ae54423fc7b12e267"
-  version = "v0.7.3"
+  revision = "271d6282f59cd10184fef147de589cce8ad69c93"
+  version = "v0.7.4"
 
 [solve-meta]
   analyzer-name = "dep"

@@ -9,3 +9,7 @@
 [[constraint]]
     name = "go.opencensus.io"
     version = "0.15"
+
+[[constraint]]
+	name = "github.com/Azure/go-autorest"
+	version = "11.0.0"

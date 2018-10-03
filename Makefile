@@ -21,7 +21,7 @@ TIMEOUT = 360
 
 .PHONY: all
 all: fmt vendor lint vet megacheck | $(BASE) ; $(info $(M) building library…) @ ## Build program
-	$Q cd $(BASE) && $(GO) build \
+	$Q cd $(BASE) && $(GO) build ./... \
 		-tags release \
 		-ldflags '-X $(PACKAGE)/cmd.Version=$(VERSION) -X $(PACKAGE)/cmd.BuildDate=$(DATE)'
 
