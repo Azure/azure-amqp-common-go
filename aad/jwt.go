@@ -200,7 +200,7 @@ func (c *TokenProviderConfiguration) NewServicePrincipalToken() (*adal.ServicePr
 // GetToken gets a CBS JWT
 func (t *TokenProvider) GetToken(audience string) (*auth.Token, error) {
 	token := t.tokenProvider.Token()
-	expireTicks, err := strconv.ParseInt(token.ExpiresOn, 10, 64)
+	expireTicks, err := strconv.ParseInt(string(token.ExpiresOn), 10, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func (t *TokenProvider) GetToken(audience string) (*auth.Token, error) {
 		token = t.tokenProvider.Token()
 	}
 
-	return auth.NewToken(auth.CBSTokenTypeJWT, token.AccessToken, token.ExpiresOn), nil
+	return auth.NewToken(auth.CBSTokenTypeJWT, token.AccessToken, string(token.ExpiresOn)), nil
 }
 
 func decodePkcs12(pkcs []byte, password string) (*x509.Certificate, *rsa.PrivateKey, error) {
