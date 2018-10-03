@@ -138,6 +138,8 @@ func (l *Link) RetryableRPC(ctx context.Context, times int, delay time.Duration,
 
 // RPC sends a request and waits on a response for that request
 func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
+	const altStatusCodeKey, altDescriptionKey = "statusCode", "statusDescription"
+
 	l.rpcMu.Lock()
 	defer l.rpcMu.Unlock()
 
@@ -160,7 +162,7 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 	}
 
 	var statusCode int
-	statusCodeCandidates := []string{statusCodeKey, "statusCode"}
+	statusCodeCandidates := []string{statusCodeKey, altStatusCodeKey}
 	for i := range statusCodeCandidates {
 		if rawStatusCode, ok := res.ApplicationProperties[statusCodeCandidates[i]]; ok {
 			if cast, ok := rawStatusCode.(int32); ok {
@@ -176,7 +178,7 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 	}
 
 	var description string
-	descriptionCandidates := []string{descriptionKey, "statusDescription"}
+	descriptionCandidates := []string{descriptionKey, altDescriptionKey}
 	descriptionFound := false
 	for i := range descriptionCandidates {
 		if rawDescription, ok := res.ApplicationProperties[descriptionCandidates[i]]; ok {
