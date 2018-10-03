@@ -1,5 +1,8 @@
 # Change Log
 
+## `v1.0.2`
+- adding resiliency against malformed "status-code" and "status-description" properties in rpc responses
+
 ## `v1.0.1`
 - bump version constant
 
