@@ -1,5 +1,8 @@
 # Change Log
 
+## `v1.0.3`
+- updating dependencies, adding new 'go-autorest' constraint
+
 ## `v1.0.2`
 - adding resiliency against malformed "status-code" and "status-description" properties in rpc responses
 
