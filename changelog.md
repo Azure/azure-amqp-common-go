@@ -1,5 +1,10 @@
 # Change Log
 
+## `v1.1.0`
+
+- adding the ability to reuse an AMQP session while making RPCs
+- bug fixes
+
 ## `v1.0.3`
 - updating dependencies, adding new 'go-autorest' constraint
 

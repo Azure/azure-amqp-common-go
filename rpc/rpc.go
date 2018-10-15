@@ -70,35 +70,41 @@ func NewLink(conn *amqp.Client, address string) (*Link, error) {
 		return nil, err
 	}
 
-	authSender, err := authSession.NewSender(
-		amqp.LinkTargetAddress(address),
-	)
-	if err != nil {
-		return nil, err
-	}
+	return NewLinkWithSession(conn, authSession, address)
+}
 
-	linkID, err := uuid.NewV4()
-	if err != nil {
-		return nil, err
-	}
+// NewLinkWithSession will build a new request response link, but will reuse an existing AMQP session
+func NewLinkWithSession(conn *amqp.Client, session *amqp.Session, address string) (*Link, error) {
 
-	id := linkID.String()
-	clientAddress := strings.Replace("$", "", address, -1) + replyPostfix + id
-	authReceiver, err := authSession.NewReceiver(
-		amqp.LinkSourceAddress(address),
-		amqp.LinkTargetAddress(clientAddress),
-	)
-	if err != nil {
-		return nil, err
-	}
+		authSender, err := session.NewSender(
+			amqp.LinkTargetAddress(address),
+		)
+		if err != nil {
+			return nil, err
+		}
 
-	return &Link{
-		sender:        authSender,
-		receiver:      authReceiver,
-		session:       authSession,
-		clientAddress: clientAddress,
-		id:            id,
-	}, nil
+		linkID, err := uuid.NewV4()
+		if err != nil {
+			return nil, err
+		}
+
+		id := linkID.String()
+		clientAddress := strings.Replace("$", "", address, -1) + replyPostfix + id
+		authReceiver, err := session.NewReceiver(
+			amqp.LinkSourceAddress(address),
+			amqp.LinkTargetAddress(clientAddress),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return &Link{
+			sender:        authSender,
+			receiver:      authReceiver,
+			session:       session,
+			clientAddress: clientAddress,
+			id:            id,
+		}, nil
 }
 
 // RetryableRPC attempts to retry a request a number of times with delay
@@ -183,7 +189,7 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 	for i := range descriptionCandidates {
 		if rawDescription, ok := res.ApplicationProperties[descriptionCandidates[i]]; ok {
 			descriptionFound = true
-			if description, ok = rawDescription.(string); ok {
+			if description, ok = rawDescription.(string); ok || rawDescription == nil {
 				break
 			} else {
 				return nil, errors.New("status description was not of expected type string")
