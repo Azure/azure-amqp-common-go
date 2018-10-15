@@ -188,7 +188,7 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 	for i := range descriptionCandidates {
 		if rawDescription, ok := res.ApplicationProperties[descriptionCandidates[i]]; ok {
 			descriptionFound = true
-			if description, ok = rawDescription.(string); ok {
+			if description, ok = rawDescription.(string); ok || rawDescription == nil {
 				break
 			} else {
 				return nil, errors.New("status description was not of expected type string")
