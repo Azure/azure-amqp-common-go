@@ -73,6 +73,7 @@ func NewLink(conn *amqp.Client, address string) (*Link, error) {
 	return NewLinkWithSession(conn, authSession, address)
 }
 
+// NewLinkWithSession will build a new request response link, but will reuse an existing AMQP session
 func NewLinkWithSession(conn *amqp.Client, session *amqp.Session, address string) (*Link, error) {
 
 		authSender, err := session.NewSender(
