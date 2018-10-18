@@ -1,5 +1,8 @@
 # Change Log
 
+## `v1.1.1`
+- broadening accepted versions of pack.ag/amqp
+
 ## `v1.1.0`
 
 - adding the ability to reuse an AMQP session while making RPCs
