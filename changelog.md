@@ -1,5 +1,8 @@
 # Change Log
 
+## `v1.1.2`
+- adopting go modules 
+
 ## `v1.1.1`
 - broadening accepted versions of pack.ag/amqp
 

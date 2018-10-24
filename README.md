@@ -10,14 +10,8 @@ If you are looking for the Azure Event Hub library for go, you can find it [here
 
 ## Install
 
-### Via dep
-
-```
-dep ensure -add "github.com/Azure/azure-amqp-common-go"
-```
-
-### Or via go get
-```
+### via go get
+``` bash
 go get github.com/Azure/azure-amqp-common-go
 ```
 
