@@ -157,7 +157,7 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 	}
 	msg.Properties.ReplyTo = l.clientAddress
 
-	if msg.ApplicationProperties["server-timeout"] == nil {
+	if _, ok := msg.ApplicationProperties["server-timeout"]; !ok {
 		if deadline, ok := ctx.Deadline(); ok {
 			msg.ApplicationProperties["server-timeout"] = uint(time.Until(deadline) / time.Millisecond)
 		}
