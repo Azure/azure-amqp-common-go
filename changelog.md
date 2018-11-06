@@ -1,5 +1,8 @@
 # Change Log
 
+## `v1.1.3`
+- adding automatic server-timeout field for `rpc` package. It gleans the appropriate value from the context passed to it
+
 ## `v1.1.2`
 - adopting go modules 
 
