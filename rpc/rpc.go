@@ -195,10 +195,8 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 
 	var description string
 	descriptionCandidates := []string{descriptionKey, altDescriptionKey}
-	descriptionFound := false
 	for i := range descriptionCandidates {
 		if rawDescription, ok := res.ApplicationProperties[descriptionCandidates[i]]; ok {
-			descriptionFound = true
 			if description, ok = rawDescription.(string); ok || rawDescription == nil {
 				break
 			} else {
@@ -206,12 +204,8 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 			}
 		}
 	}
-	if !descriptionFound {
-		return nil, errors.New("status description was not found on rpc message")
-	}
 
 	res.Accept()
-
 	return &Response{
 		Code:        int(statusCode),
 		Description: description,
