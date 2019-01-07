@@ -1,5 +1,8 @@
 # Change Log
 
+## `v1.1.4`
+- allow status description on RPC calls to be empty without returning an error https://github.com/Azure/azure-event-hubs-go/issues/88
+
 ## `v1.1.3`
 - adding automatic server-timeout field for `rpc` package. It gleans the appropriate value from the context passed to it
 
