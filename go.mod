@@ -7,6 +7,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/fortytw2/leaktest v1.2.0 // indirect
 	github.com/google/go-cmp v0.2.0 // indirect
+	github.com/opentracing/opentracing-go v1.0.2
 	github.com/pkg/errors v0.8.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/testify v1.2.2
