@@ -58,7 +58,7 @@ func (s *Span) AddAttributes(attributes ...trace.Attribute) {
 	s.span.AddAttributes(attributesToOCAttributes(attributes...)...)
 }
 
-// End ends the span.
+// End ends the span
 func (s *Span) End() {
 	s.span.End()
 }

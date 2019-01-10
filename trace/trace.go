@@ -26,6 +26,30 @@ func Int64Attribute(key string, value int64) Attribute {
 	return Attribute{Key: key, Value: value}
 }
 
+// StartSpan starts a new child span
+func StartSpan(ctx context.Context, operationName string, opts ...interface{}) (context.Context, Spanner) {
+	if tracer == nil {
+		return ctx, new(nopSpanner)
+	}
+	return tracer.StartSpan(ctx, operationName, opts)
+}
+
+// StartSpanWithRemoteParent starts a new child span of the span from the given parent.
+func StartSpanWithRemoteParent(ctx context.Context, operationName string, reference interface{}, opts ...interface{}) (context.Context, Spanner) {
+	if tracer == nil {
+		return ctx, new(nopSpanner)
+	}
+	return tracer.StartSpanWithRemoteParent(ctx, operationName, reference, opts)
+}
+
+// FromContext returns the Span stored in a context, or nil if there isn't one.
+func FromContext(ctx context.Context) Spanner {
+	if tracer == nil {
+		return new(nopSpanner)
+	}
+	return tracer.FromContext(ctx)
+}
+
 type (
 	// Attribute is a key value pair for decorating spans
 	Attribute struct {
@@ -61,7 +85,20 @@ type (
 	}
 
 	nopLogger struct{}
+
+	nopSpanner struct{}
 )
+
+// AddAttributes is a nop
+func (ns *nopSpanner) AddAttributes(attributes ...Attribute) {}
+
+// End is a nop
+func (ns *nopSpanner) End() {}
+
+// Logger returns a nopLogger
+func (ns *nopSpanner) Logger() Logger {
+	return nopLogger{}
+}
 
 // For will return a logger for a given context
 func For(ctx context.Context) Logger {
