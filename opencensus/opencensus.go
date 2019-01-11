@@ -4,11 +4,16 @@ import (
 	"context"
 	"github.com/Azure/azure-amqp-common-go/trace"
 	oct "go.opencensus.io/trace"
+	"go.opencensus.io/trace/propagation"
 )
 
 func init() {
 	trace.Register(new(Trace))
 }
+
+const (
+	propagationKey = "_oc_prop"
+)
 
 type (
 	// Trace is the implementation of the OpenCensus trace abstraction
@@ -37,11 +42,15 @@ func (t *Trace) StartSpan(ctx context.Context, operationName string, opts ...int
 //
 // Returned context contains the newly created span. You can use it to
 // propagate the returned span in process.
-func (t *Trace) StartSpanWithRemoteParent(ctx context.Context, operationName string, reference interface{}, opts ...interface{}) (context.Context, trace.Spanner) {
-	if sp, ok := reference.(oct.SpanContext); ok {
-		ctx, span := oct.StartSpanWithRemoteParent(ctx, operationName, sp, toOCOption(opts...)...)
-		return ctx, &Span{span: span}
+func (t *Trace) StartSpanWithRemoteParent(ctx context.Context, operationName string, carrier trace.Carrier, opts ...interface{}) (context.Context, trace.Spanner) {
+	keysValues := carrier.GetKeyValues()
+	if val, ok := keysValues[propagationKey]; ok {
+		if sc, ok := propagation.FromBinary(val.([]byte)); ok {
+			ctx, span := oct.StartSpanWithRemoteParent(ctx, operationName, sc)
+			return ctx, &Span{span: span}
+		}
 	}
+
 	return t.StartSpan(ctx, operationName)
 }
 
@@ -66,6 +75,12 @@ func (s *Span) End() {
 // Logger returns a trace.Logger for the span
 func (s *Span) Logger() trace.Logger {
 	return &trace.SpanLogger{Span: s}
+}
+
+// Inject propagation key onto the carrier
+func (s *Span) Inject(carrier trace.Carrier) error {
+	carrier.Set(propagationKey, propagation.Binary(s.span.SpanContext()))
+	return nil
 }
 
 func toOCOption(opts ...interface{}) []oct.StartOption {

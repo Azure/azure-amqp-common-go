@@ -29,23 +29,23 @@ func Int64Attribute(key string, value int64) Attribute {
 // StartSpan starts a new child span
 func StartSpan(ctx context.Context, operationName string, opts ...interface{}) (context.Context, Spanner) {
 	if tracer == nil {
-		return ctx, new(nopSpanner)
+		return ctx, new(noOpSpanner)
 	}
 	return tracer.StartSpan(ctx, operationName, opts)
 }
 
 // StartSpanWithRemoteParent starts a new child span of the span from the given parent.
-func StartSpanWithRemoteParent(ctx context.Context, operationName string, reference interface{}, opts ...interface{}) (context.Context, Spanner) {
+func StartSpanWithRemoteParent(ctx context.Context, operationName string, carrier Carrier, opts ...interface{}) (context.Context, Spanner) {
 	if tracer == nil {
-		return ctx, new(nopSpanner)
+		return ctx, new(noOpSpanner)
 	}
-	return tracer.StartSpanWithRemoteParent(ctx, operationName, reference, opts)
+	return tracer.StartSpanWithRemoteParent(ctx, operationName, carrier, opts)
 }
 
 // FromContext returns the Span stored in a context, or nil if there isn't one.
 func FromContext(ctx context.Context) Spanner {
 	if tracer == nil {
-		return new(nopSpanner)
+		return new(noOpSpanner)
 	}
 	return tracer.FromContext(ctx)
 }
@@ -57,17 +57,24 @@ type (
 		Value interface{}
 	}
 
+	// Carrier is an abstraction over OpenTracing and OpenCensus propagation carrier
+	Carrier interface {
+		Set(key string, value interface{})
+		GetKeyValues() map[string]interface{}
+	}
+
 	// Spanner is an abstraction over OpenTracing and OpenCensus Spans
 	Spanner interface {
 		AddAttributes(attributes ...Attribute)
 		End()
 		Logger() Logger
+		Inject(carrier Carrier) error
 	}
 
 	// Tracer is an abstraction over OpenTracing and OpenCensus trace implementations
 	Tracer interface {
 		StartSpan(ctx context.Context, operationName string, opts ...interface{}) (context.Context, Spanner)
-		StartSpanWithRemoteParent(ctx context.Context, operationName string, reference interface{}, opts ...interface{}) (context.Context, Spanner)
+		StartSpanWithRemoteParent(ctx context.Context, operationName string, carrier Carrier, opts ...interface{}) (context.Context, Spanner)
 		FromContext(ctx context.Context) Spanner
 	}
 
@@ -84,20 +91,25 @@ type (
 		Span Spanner
 	}
 
-	nopLogger struct{}
+	noOpLogger struct{}
 
-	nopSpanner struct{}
+	noOpSpanner struct{}
 )
 
 // AddAttributes is a nop
-func (ns *nopSpanner) AddAttributes(attributes ...Attribute) {}
+func (ns *noOpSpanner) AddAttributes(attributes ...Attribute) {}
 
 // End is a nop
-func (ns *nopSpanner) End() {}
+func (ns *noOpSpanner) End() {}
 
 // Logger returns a nopLogger
-func (ns *nopSpanner) Logger() Logger {
-	return nopLogger{}
+func (ns *noOpSpanner) Logger() Logger {
+	return noOpLogger{}
+}
+
+// Inject is a nop
+func (ns *noOpSpanner) Inject(carrier Carrier) error {
+	return nil
 }
 
 // For will return a logger for a given context
@@ -105,7 +117,7 @@ func For(ctx context.Context) Logger {
 	if span := tracer.FromContext(ctx); span != nil {
 		return span.Logger()
 	}
-	return new(nopLogger)
+	return new(noOpLogger)
 }
 
 // Info logs an info tag with message to a span
@@ -136,13 +148,13 @@ func (sl SpanLogger) logToSpan(level string, msg string, attributes ...Attribute
 }
 
 // Info nops log entry
-func (sl nopLogger) Info(msg string, attributes ...Attribute) {}
+func (sl noOpLogger) Info(msg string, attributes ...Attribute) {}
 
 // Error nops log entry
-func (sl nopLogger) Error(err error, attributes ...Attribute) {}
+func (sl noOpLogger) Error(err error, attributes ...Attribute) {}
 
 // Fatal nops log entry
-func (sl nopLogger) Fatal(msg string, attributes ...Attribute) {}
+func (sl noOpLogger) Fatal(msg string, attributes ...Attribute) {}
 
 // Debug nops log entry
-func (sl nopLogger) Debug(msg string, attributes ...Attribute) {}
+func (sl noOpLogger) Debug(msg string, attributes ...Attribute) {}
