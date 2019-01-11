@@ -60,6 +60,14 @@ func (t *Trace) FromContext(ctx context.Context) trace.Spanner {
 	return &Span{span: sp}
 }
 
+// NewContext returns a new context with the given Span attached.
+func (t *Trace) NewContext(ctx context.Context, span trace.Spanner) context.Context {
+	if sp, ok := span.InternalSpan().(*oct.Span); ok {
+		return oct.NewContext(ctx, sp)
+	}
+	return ctx
+}
+
 // AddAttributes sets attributes in the span.
 //
 // Existing attributes whose keys appear in the attributes parameter are overwritten.
@@ -81,6 +89,11 @@ func (s *Span) Logger() trace.Logger {
 func (s *Span) Inject(carrier trace.Carrier) error {
 	carrier.Set(propagationKey, propagation.Binary(s.span.SpanContext()))
 	return nil
+}
+
+// InternalSpan returns the real implementation of the Span
+func (s *Span) InternalSpan() interface{} {
+	return s.span
 }
 
 func toOCOption(opts ...interface{}) []oct.StartOption {

@@ -69,6 +69,7 @@ type (
 		End()
 		Logger() Logger
 		Inject(carrier Carrier) error
+		InternalSpan() interface{}
 	}
 
 	// Tracer is an abstraction over OpenTracing and OpenCensus trace implementations
@@ -76,6 +77,7 @@ type (
 		StartSpan(ctx context.Context, operationName string, opts ...interface{}) (context.Context, Spanner)
 		StartSpanWithRemoteParent(ctx context.Context, operationName string, carrier Carrier, opts ...interface{}) (context.Context, Spanner)
 		FromContext(ctx context.Context) Spanner
+		NewContext(parent context.Context, span Spanner) context.Context
 	}
 
 	// Logger is a generic interface for logging
@@ -109,6 +111,11 @@ func (ns *noOpSpanner) Logger() Logger {
 
 // Inject is a nop
 func (ns *noOpSpanner) Inject(carrier Carrier) error {
+	return nil
+}
+
+// InternalSpan returns nil
+func (ns *noOpSpanner) InternalSpan() interface{} {
 	return nil
 }
 

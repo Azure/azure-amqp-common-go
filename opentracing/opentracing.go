@@ -52,6 +52,14 @@ func (t *Trace) FromContext(ctx context.Context) trace.Spanner {
 	return &Span{span: sp}
 }
 
+// NewContext returns a new context with the given Span attached.
+func (t *Trace) NewContext(ctx context.Context, span trace.Spanner) context.Context {
+	if sp, ok := span.InternalSpan().(opentracing.Span); ok {
+		return opentracing.ContextWithSpan(ctx, sp)
+	}
+	return ctx
+}
+
 // AddAttributes a tags to the span.
 //
 // If there is a pre-existing tag set for `key`, it is overwritten.
@@ -78,6 +86,11 @@ func (s *Span) Logger() trace.Logger {
 // Inject span context into carrier
 func (s *Span) Inject(carrier trace.Carrier) error {
 	return opentracing.GlobalTracer().Inject(s.span.Context(), opentracing.TextMap, carrierAdapter{carrier: carrier})
+}
+
+// InternalSpan returns the real implementation of the Span
+func (s *Span) InternalSpan() interface{} {
+	return s.span
 }
 
 // Set a key and value on the carrier
