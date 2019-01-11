@@ -50,6 +50,14 @@ func FromContext(ctx context.Context) Spanner {
 	return tracer.FromContext(ctx)
 }
 
+// NewContext returns a new context with the given Span attached.
+func NewContext(ctx context.Context, span Spanner) context.Context {
+	if tracer == nil {
+		return ctx
+	}
+	return tracer.NewContext(ctx, span)
+}
+
 type (
 	// Attribute is a key value pair for decorating spans
 	Attribute struct {
