@@ -5,7 +5,7 @@ require (
 	github.com/Azure/azure-sdk-for-go v29.0.0+incompatible // indirect
 	github.com/Azure/go-autorest v12.0.0+incompatible
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/devigned/tab v0.1.0
+	github.com/devigned/tab v0.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/fortytw2/leaktest v1.2.0 // indirect
 	github.com/pkg/errors v0.8.0 // indirect
