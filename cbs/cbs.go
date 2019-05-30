@@ -32,9 +32,9 @@ import (
 	"github.com/devigned/tab"
 	"pack.ag/amqp"
 
-	"github.com/Azure/azure-amqp-common-go/auth"
-	"github.com/Azure/azure-amqp-common-go/internal/tracing"
-	"github.com/Azure/azure-amqp-common-go/rpc"
+	"github.com/Azure/azure-amqp-common-go/v2/auth"
+	"github.com/Azure/azure-amqp-common-go/v2/internal/tracing"
+	"github.com/Azure/azure-amqp-common-go/v2/rpc"
 )
 
 const (
