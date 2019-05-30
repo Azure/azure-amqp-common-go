@@ -16,4 +16,5 @@ before_install:
  - cd ${TRAVIS_BUILD_DIR}
 
 script:
+ - export GO111MODULE=on
  - make test
