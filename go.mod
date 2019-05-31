@@ -1,5 +1,7 @@
 module github.com/Azure/azure-amqp-common-go/v2
 
+go 1.12
+
 require (
 	contrib.go.opencensus.io/exporter/ocagent v0.5.0 // indirect
 	github.com/Azure/azure-sdk-for-go v29.0.0+incompatible // indirect

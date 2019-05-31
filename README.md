@@ -4,15 +4,23 @@
 [![Build Status](https://travis-ci.org/Azure/azure-amqp-common-go.svg?branch=master)](https://travis-ci.org/Azure/azure-amqp-common-go)
 
 This project contains reusable components for AMQP based services like Event Hub and Service Bus. You will find 
-abstractions over authentication, claims-based security, connection string parsing, checkpointing and RPC for AMQP.
+abstractions over authentication, claims-based security, connection string parsing and RPC for AMQP.
 
-If you are looking for the Azure Event Hub library for go, you can find it [here](https://github.com/Azure/azure-event-hubs-go).
+If you are looking for the Azure Event Hub library for go, you can find it [here](https://aka.ms/azure-event-hubs-go).
+
+If you are looking for the Azure Service Bus library for go, you can find it [here](https://aka.ms/azure-service-bus-go).
 
 ## Install
+If you want to use stable versions of the library, please use Go modules.
 
-### via go get
+### Using go get with Go modules targeting version 2.x.x
 ``` bash
-go get github.com/Azure/azure-amqp-common-go
+go get -u github.com/Azure/azure-amqp-common-go/v2
+```
+
+### Using go get with Go modules targeting version 1.x.x
+``` bash
+go get -u github.com/Azure/azure-amqp-common-go
 ```
 
 ## Contributing
