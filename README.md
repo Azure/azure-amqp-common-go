@@ -10,15 +10,15 @@ If you are looking for the Azure Event Hub library for go, you can find it [here
 
 If you are looking for the Azure Service Bus library for go, you can find it [here](https://aka.ms/azure-service-bus-go).
 
-## Install
+## Install with Go modules
 If you want to use stable versions of the library, please use Go modules.
 
-### Using go get with Go modules targeting version 2.x.x
+### Using go get targeting version 2.x.x
 ``` bash
 go get -u github.com/Azure/azure-amqp-common-go/v2
 ```
 
-### Using go get with Go modules targeting version 1.x.x
+### Using go get targeting version 1.x.x
 ``` bash
 go get -u github.com/Azure/azure-amqp-common-go
 ```
