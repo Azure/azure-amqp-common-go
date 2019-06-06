@@ -2,19 +2,19 @@ language: go
 sudo: false
 go:
  - 1.x
- - tip
-
-env:
- - GO111MODULE=on
+ - 1.11.x
 
 matrix:
- allow_failures:
-  - go: tip
  fast_finish: true
 
 before_install:
-  - go get github.com/fzipp/gocyclo
-  - go get honnef.co/go/tools/cmd/megacheck
+ - cd ${TRAVIS_HOME}
+ - go get github.com/mattn/goveralls
+ - go get golang.org/x/tools/cmd/cover
+ - go get github.com/fzipp/gocyclo
+ - go get golang.org/x/lint/golint
+ - cd ${TRAVIS_BUILD_DIR}
 
 script:
-  make test
+ - export GO111MODULE=on
+ - make test

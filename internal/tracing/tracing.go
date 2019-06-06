@@ -4,28 +4,29 @@ import (
 	"context"
 	"os"
 
-	"github.com/Azure/azure-amqp-common-go/internal"
-	"go.opencensus.io/trace"
+	"github.com/devigned/tab"
+
+	"github.com/Azure/azure-amqp-common-go/v2/internal"
 )
 
 // StartSpanFromContext starts a span given a context and applies common library information
-func StartSpanFromContext(ctx context.Context, operationName string, opts ...trace.StartOption) (*trace.Span, context.Context) {
-	ctx, span := trace.StartSpan(ctx, operationName, opts...)
+func StartSpanFromContext(ctx context.Context, operationName string) (context.Context, tab.Spanner) {
+	ctx, span := tab.StartSpan(ctx, operationName)
 	ApplyComponentInfo(span)
-	return span, ctx
+	return ctx, span
 }
 
 // ApplyComponentInfo applies eventhub library and network info to the span
-func ApplyComponentInfo(span *trace.Span) {
+func ApplyComponentInfo(span tab.Spanner) {
 	span.AddAttributes(
-		trace.StringAttribute("component", "github.com/Azure/azure-amqp-common-go"),
-		trace.StringAttribute("version", common.Version))
+		tab.StringAttribute("component", "github.com/Azure/azure-amqp-common-go"),
+		tab.StringAttribute("version", common.Version))
 	applyNetworkInfo(span)
 }
 
-func applyNetworkInfo(span *trace.Span) {
+func applyNetworkInfo(span tab.Spanner) {
 	hostname, err := os.Hostname()
 	if err == nil {
-		span.AddAttributes(trace.StringAttribute("peer.hostname", hostname))
+		span.AddAttributes(tab.StringAttribute("peer.hostname", hostname))
 	}
 }

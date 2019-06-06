@@ -19,7 +19,7 @@ M = $(shell printf "\033[34;1m▶\033[0m")
 TIMEOUT = 360
 
 .PHONY: all
-all: fmt go.sum lint vet megacheck | $(BASE) ; $(info $(M) building library…) @ ## Build program
+all: fmt go.sum lint vet tidy | $(BASE) ; $(info $(M) building library…) @ ## Build program
 	$Q cd $(BASE) && $(GO) build \
 		-tags release \
 		-ldflags '-X $(PACKAGE)/cmd.Version=$(VERSION) -X $(PACKAGE)/cmd.BuildDate=$(DATE)' \
@@ -35,6 +35,10 @@ GOLINT = $(BIN)/golint
 $(BIN)/golint: | $(BASE) ; $(info $(M) building golint…)
 	$Q go get -u golang.org/x/lint/golint
 
+.PHONY: tidy
+tidy: ; $(info $(M) running tidy…) @ ## Run tidy
+	$Q $(GO) mod tidy
+
 # Tests
 
 TEST_TARGETS := test-default test-bench test-short test-verbose test-race test-debug
@@ -47,7 +51,7 @@ test-race:    ARGS=-race         ## Run tests with race detector
 test-cover:   ARGS=-cover     ## Run tests in verbose mode with coverage
 $(TEST_TARGETS): NAME=$(MAKECMDGOALS:test-%=%)
 $(TEST_TARGETS): test
-check test tests: cyclo lint vet go.sum megacheck | $(BASE) ; $(info $(M) running $(NAME:%=% )tests…) @ ## Run tests
+check test tests: cyclo lint vet go.sum | $(BASE) ; $(info $(M) running $(NAME:%=% )tests…) @ ## Run tests
 	$Q cd $(BASE) && $(GO) test -timeout $(TIMEOUT)s $(ARGS) $(TESTPKGS)
 
 .PHONY: vet
@@ -59,10 +63,6 @@ lint: go.sum | $(BASE) $(GOLINT) ; $(info $(M) running golint…) @ ## Run golin
 	$Q cd $(BASE) && ret=0 && for pkg in $(PKGS); do \
 		test -z "$$($(GOLINT) $$pkg | tee /dev/stderr)" || ret=1 ; \
 	 done ; exit $$ret
-
-.PHONY: megacheck
-megacheck: go.sum | $(BASE) ; $(info $(M) running megacheck…) @ ## Run megacheck
-	$Q cd $(BASE) && megacheck
 
 .PHONY: fmt
 fmt: ; $(info $(M) running gofmt…) @ ## Run gofmt on all source files

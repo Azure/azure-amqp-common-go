@@ -1,5 +1,9 @@
 # Change Log
 
+## `v2.0.0`
+- [**breaking change** remove persist and move into the Event Hubs package](https://github.com/Azure/azure-event-hubs-go/pull/112)
+- **breaking change** remove log package in favor of https://github.com/devigned/tab
+
 ## `v1.1.4`
 - allow status description on RPC calls to be empty without returning an error https://github.com/Azure/azure-event-hubs-go/issues/88
 

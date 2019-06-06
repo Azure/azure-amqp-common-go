@@ -29,11 +29,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Azure/azure-amqp-common-go/auth"
-	"github.com/Azure/azure-amqp-common-go/internal/tracing"
-	"github.com/Azure/azure-amqp-common-go/log"
-	"github.com/Azure/azure-amqp-common-go/rpc"
+	"github.com/devigned/tab"
 	"pack.ag/amqp"
+
+	"github.com/Azure/azure-amqp-common-go/v2/auth"
+	"github.com/Azure/azure-amqp-common-go/v2/internal/tracing"
+	"github.com/Azure/azure-amqp-common-go/v2/rpc"
 )
 
 const (
@@ -47,7 +48,7 @@ const (
 
 // NegotiateClaim attempts to put a token to the $cbs management endpoint to negotiate auth for the given audience
 func NegotiateClaim(ctx context.Context, audience string, conn *amqp.Client, provider auth.TokenProvider) error {
-	span, ctx := tracing.StartSpanFromContext(ctx, "az-amqp-common.cbs.NegotiateClaim")
+	ctx, span := tracing.StartSpanFromContext(ctx, "az-amqp-common.cbs.NegotiateClaim")
 	defer span.End()
 
 	link, err := rpc.NewLink(conn, cbsAddress)
@@ -61,7 +62,7 @@ func NegotiateClaim(ctx context.Context, audience string, conn *amqp.Client, pro
 		return err
 	}
 
-	log.For(ctx).Debug(fmt.Sprintf("negotiating claim for audience %s with token type %s and expiry of %s", audience, token.TokenType, token.Expiry))
+	tab.For(ctx).Debug(fmt.Sprintf("negotiating claim for audience %s with token type %s and expiry of %s", audience, token.TokenType, token.Expiry))
 	msg := &amqp.Message{
 		Value: token.Token,
 		ApplicationProperties: map[string]interface{}{
@@ -74,10 +75,10 @@ func NegotiateClaim(ctx context.Context, audience string, conn *amqp.Client, pro
 
 	res, err := link.RetryableRPC(ctx, 3, 1*time.Second, msg)
 	if err != nil {
-		log.For(ctx).Error(err)
+		tab.For(ctx).Error(err)
 		return err
 	}
 
-	log.For(ctx).Debug(fmt.Sprintf("negotiated with response code %d and message: %s", res.Code, res.Description))
+	tab.For(ctx).Debug(fmt.Sprintf("negotiated with response code %d and message: %s", res.Code, res.Description))
 	return nil
 }
