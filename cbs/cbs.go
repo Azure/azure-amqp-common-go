@@ -53,12 +53,18 @@ func NegotiateClaim(ctx context.Context, audience string, conn *amqp.Client, pro
 
 	link, err := rpc.NewLink(conn, cbsAddress)
 	if err != nil {
+		tab.For(ctx).Error(err)
 		return err
 	}
-	defer link.Close(ctx)
+	defer func() {
+		if err := link.Close(ctx); err != nil {
+			tab.For(ctx).Error(err)
+		}
+	}()
 
 	token, err := provider.GetToken(audience)
 	if err != nil {
+		tab.For(ctx).Error(err)
 		return err
 	}
 
