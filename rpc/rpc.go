@@ -252,6 +252,8 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 		}
 	}
 
+	span.AddAttributes(tab.StringAttribute("http.status_code", fmt.Sprintf("%d", statusCode)))
+
 	response := &Response{
 		Code:        int(statusCode),
 		Description: description,
