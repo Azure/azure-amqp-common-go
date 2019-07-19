@@ -1,5 +1,12 @@
 # Change Log
 
+## `head`
+
+## `v2.1.0`
+- add session filters for RPC links
+- bump amqp to v0.11.2
+- add more logging in RPC operations
+
 ## `v2.0.0`
 - [**breaking change** remove persist and move into the Event Hubs package](https://github.com/Azure/azure-event-hubs-go/pull/112)
 - **breaking change** remove log package in favor of https://github.com/devigned/tab
