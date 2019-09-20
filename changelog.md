@@ -2,6 +2,11 @@
 
 ## `head`
 
+## `v2.1.1`
+- bump amqp to v0.12.1
+- bump azure sdk for go to v32.5.0
+- bump go-autorest
+
 ## `v2.1.0`
 - add session filters for RPC links
 - bump amqp to v0.11.2
