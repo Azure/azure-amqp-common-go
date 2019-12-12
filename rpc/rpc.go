@@ -32,11 +32,11 @@ import (
 	"time"
 
 	"github.com/devigned/tab"
-	"pack.ag/amqp"
 
 	"github.com/Azure/azure-amqp-common-go/v2"
 	"github.com/Azure/azure-amqp-common-go/v2/internal/tracing"
 	"github.com/Azure/azure-amqp-common-go/v2/uuid"
+	"github.com/Azure/go-amqp"
 )
 
 const (
