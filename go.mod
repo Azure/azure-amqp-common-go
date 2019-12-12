@@ -1,4 +1,4 @@
-module github.com/Azure/azure-amqp-common-go/v2
+module github.com/Azure/azure-amqp-common-go/v3
 
 go 1.12
 

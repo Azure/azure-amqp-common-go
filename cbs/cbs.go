@@ -31,9 +31,9 @@ import (
 
 	"github.com/devigned/tab"
 
-	"github.com/Azure/azure-amqp-common-go/v2/auth"
-	"github.com/Azure/azure-amqp-common-go/v2/internal/tracing"
-	"github.com/Azure/azure-amqp-common-go/v2/rpc"
+	"github.com/Azure/azure-amqp-common-go/v3/auth"
+	"github.com/Azure/azure-amqp-common-go/v3/internal/tracing"
+	"github.com/Azure/azure-amqp-common-go/v3/rpc"
 	"github.com/Azure/go-amqp"
 )
 

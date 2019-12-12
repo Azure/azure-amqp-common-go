@@ -2,5 +2,5 @@ package common
 
 const (
 	// Version is the semantic version of the library
-	Version = "2.1.1"
+	Version = "3.0.0"
 )
