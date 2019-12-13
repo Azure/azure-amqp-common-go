@@ -13,6 +13,14 @@ If you are looking for the Azure Service Bus library for go, you can find it [he
 ## Install with Go modules
 If you want to use stable versions of the library, please use Go modules.
 
+**NOTE**: versions prior to 3.0.0 depend on pack.ag/amqp which is no longer maintained.
+Any new code should not use versions prior to 3.0.0.
+
+### Using go get targeting version 3.x.x
+``` bash
+go get -u github.com/Azure/azure-amqp-common-go/v3
+```
+
 ### Using go get targeting version 2.x.x
 ``` bash
 go get -u github.com/Azure/azure-amqp-common-go/v2
