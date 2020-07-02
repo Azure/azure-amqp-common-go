@@ -260,7 +260,7 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 		Message:     res,
 	}
 
-	if err := res.Accept(); err != nil {
+	if err := res.Accept(ctx); err != nil {
 		tab.For(ctx).Error(err)
 		return response, err
 	}
