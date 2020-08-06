@@ -1,6 +1,7 @@
 variables:
   GOPATH: '$(system.defaultWorkingDirectory)/work'
   sdkPath: '$(GOPATH)/src/github.com/$(build.repository.name)'
+  GO111MODULE: 'on'
 
 jobs:
   - job: 'azureamqpcommongo'
@@ -40,6 +41,8 @@ jobs:
           go get github.com/axw/gocov/gocov
           go get github.com/AlekSi/gocov-xml
           go get -u github.com/matm/gocov-html
+          go get -u golang.org/x/lint/golint
+          go get github.com/fzipp/gocyclo
         workingDirectory: '$(sdkPath)'
         displayName: 'Install Dependencies'
 
@@ -52,6 +55,16 @@ jobs:
           go vet ./...
         workingDirectory: '$(sdkPath)'
         displayName: 'Vet'
+
+      - script: |
+          golint ./...
+        workingDirectory: '$(sdkPath)'
+        displayName: 'Lint'
+
+      - script: |
+          gocyclo -over 19 .
+        workingDirectory: '$(sdkPath)'
+        displayName: 'Cyclo'
 
       - script: |
           set -e
