@@ -1,6 +1,7 @@
 # Change Log
 
 ## `head`
+- fix refresh error to return the underlying http error instead of the token
 
 ## `v2.1.1`
 - bump amqp to v0.12.1
