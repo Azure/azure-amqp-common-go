@@ -178,7 +178,7 @@ func (c *TokenProviderConfiguration) NewServicePrincipalToken() (*adal.ServicePr
 			return nil, fmt.Errorf("failed to get oauth token from certificate auth: %v", err)
 		}
 		if err := spToken.Refresh(); err != nil {
-			return nil, fmt.Errorf("failed to refersh token: %v", spToken)
+			return nil, fmt.Errorf("failed to refresh token: %v", err)
 		}
 		return spToken, nil
 	}
