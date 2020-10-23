@@ -188,7 +188,7 @@ func (c *TokenProviderConfiguration) NewServicePrincipalToken() (*adal.ServicePr
 	if err != nil {
 		return nil, err
 	}
-	spToken, err := c.getTokenProvider(msiEndpoint)
+	spToken, err := c.getMSIToken(msiEndpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get oauth token from MSI: %v", err)
 	}
@@ -198,7 +198,7 @@ func (c *TokenProviderConfiguration) NewServicePrincipalToken() (*adal.ServicePr
 	return spToken, nil
 }
 
-func (c *TokenProviderConfiguration) getTokenProvider(msiEndpoint string) (*adal.ServicePrincipalToken, error) {
+func (c *TokenProviderConfiguration) getMSIToken(msiEndpoint string) (*adal.ServicePrincipalToken, error) {
 	if c.ClientID == "" {
 		return adal.NewServicePrincipalTokenFromMSI(msiEndpoint, c.ResourceURI)
 	}
