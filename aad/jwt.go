@@ -188,7 +188,7 @@ func (c *TokenProviderConfiguration) NewServicePrincipalToken() (*adal.ServicePr
 	if err != nil {
 		return nil, err
 	}
-	spToken, err := adal.NewServicePrincipalTokenFromMSI(msiEndpoint, c.ResourceURI)
+	spToken, err := c.getMSIToken(msiEndpoint)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get oauth token from MSI: %v", err)
 	}
@@ -196,6 +196,13 @@ func (c *TokenProviderConfiguration) NewServicePrincipalToken() (*adal.ServicePr
 		return nil, fmt.Errorf("failed to refersh token: %v", spToken)
 	}
 	return spToken, nil
+}
+
+func (c *TokenProviderConfiguration) getMSIToken(msiEndpoint string) (*adal.ServicePrincipalToken, error) {
+	if c.ClientID == "" {
+		return adal.NewServicePrincipalTokenFromMSI(msiEndpoint, c.ResourceURI)
+	}
+	return adal.NewServicePrincipalTokenFromMSIWithUserAssignedID(msiEndpoint, c.ResourceURI, c.ClientID)
 }
 
 // GetToken gets a CBS JWT
