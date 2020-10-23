@@ -197,12 +197,14 @@ func (c *TokenProviderConfiguration) NewServicePrincipalToken() (*adal.ServicePr
 	}
 	return spToken, nil
 }
-func (c *TokenProviderConfiguration) getTokenProvider(msiEndpoint string) (*adal.ServicePrincipalToken, error){
+
+func (c *TokenProviderConfiguration) getTokenProvider(msiEndpoint string) (*adal.ServicePrincipalToken, error) {
 	if c.ClientID == "" {
 		return adal.NewServicePrincipalTokenFromMSI(msiEndpoint, c.ResourceURI)
 	}
 	return adal.NewServicePrincipalTokenFromMSIWithUserAssignedID(msiEndpoint, c.ResourceURI, c.ClientID)
 }
+
 // GetToken gets a CBS JWT
 func (t *TokenProvider) GetToken(audience string) (*auth.Token, error) {
 	token := t.tokenProvider.Token()
