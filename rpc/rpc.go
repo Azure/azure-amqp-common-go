@@ -27,13 +27,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/devigned/tab"
 
-	"github.com/Azure/azure-amqp-common-go/v3"
+	common "github.com/Azure/azure-amqp-common-go/v3"
 	"github.com/Azure/azure-amqp-common-go/v3/internal/tracing"
 	"github.com/Azure/azure-amqp-common-go/v3/uuid"
 	"github.com/Azure/go-amqp"
@@ -48,14 +49,17 @@ const (
 type (
 	// Link is the bidirectional communication structure used for CBS negotiation
 	Link struct {
-		session       *amqp.Session
-		receiver      *amqp.Receiver
-		sender        *amqp.Sender
-		clientAddress string
-		rpcMu         sync.Mutex
-		sessionID     *string
-		useSessionID  bool
-		id            string
+		session          *amqp.Session
+		receiver         *amqp.Receiver
+		sender           *amqp.Sender
+		clientAddress    string
+		rpcMu            sync.Mutex
+		sessionID        *string
+		useSessionID     bool
+		id               string
+		responseListener *sync.Once
+
+		responseMap map[string]chan receiveResult
 	}
 
 	// Response is the simplified response structure from an RPC like call
@@ -67,6 +71,11 @@ type (
 
 	// LinkOption provides a way to customize the construction of a Link
 	LinkOption func(link *Link) error
+
+	receiveResult struct {
+		message *amqp.Message
+		err     error
+	}
 )
 
 // LinkWithSessionFilter configures a Link to use a session filter
@@ -97,9 +106,11 @@ func NewLinkWithSession(session *amqp.Session, address string, opts ...LinkOptio
 
 	id := linkID.String()
 	link := &Link{
-		session:       session,
-		clientAddress: strings.Replace("$", "", address, -1) + replyPostfix + id,
-		id:            id,
+		session:          session,
+		clientAddress:    strings.Replace("$", "", address, -1) + replyPostfix + id,
+		id:               id,
+		responseMap:      map[string]chan receiveResult{},
+		responseListener: &sync.Once{},
 	}
 
 	for _, opt := range opts {
@@ -185,10 +196,33 @@ func (l *Link) RetryableRPC(ctx context.Context, times int, delay time.Duration,
 
 // RPC sends a request and waits on a response for that request
 func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
-	const altStatusCodeKey, altDescriptionKey = "statusCode", "statusDescription"
+	l.responseListener.Do(func() {
+		for {
+			log.Printf("Waiting for message")
+			res, err := l.receiver.Receive(context.Background())
+			log.Printf("Received message")
 
-	l.rpcMu.Lock()
-	defer l.rpcMu.Unlock()
+			l.rpcMu.Lock()
+			autogenMessageId := res.Properties.CorrelationID.(string)
+			ch, ok := l.responseMap[autogenMessageId]
+			delete(l.responseMap, autogenMessageId)
+			l.rpcMu.Unlock()
+
+			if ok {
+				ch <- receiveResult{message: res, err: err}
+			}
+		}
+	})
+
+	uuid, err := uuid.NewV4()
+
+	if err != nil {
+		return nil, err
+	}
+
+	autoGenMessageId := uuid.String()
+
+	const altStatusCodeKey, altDescriptionKey = "statusCode", "statusDescription"
 
 	ctx, span := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.RPC")
 	defer span.End()
@@ -196,7 +230,9 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 	if msg.Properties == nil {
 		msg.Properties = &amqp.MessageProperties{}
 	}
+
 	msg.Properties.ReplyTo = l.clientAddress
+	msg.Properties.MessageID = autoGenMessageId
 
 	if msg.ApplicationProperties == nil {
 		msg.ApplicationProperties = make(map[string]interface{})
@@ -208,13 +244,26 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 		}
 	}
 
-	err := l.sender.Send(ctx, msg)
+	l.rpcMu.Lock()
+	responseCh := make(chan receiveResult, 1)
+	l.responseMap[autoGenMessageId] = responseCh
+	l.rpcMu.Unlock()
+
+	err = l.sender.Send(ctx, msg)
 	if err != nil {
 		tab.For(ctx).Error(err)
 		return nil, err
 	}
 
-	res, err := l.receiver.Receive(ctx)
+	var res *amqp.Message
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case resp := <-responseCh:
+		res, err = resp.message, resp.err
+	}
+
 	if err != nil {
 		tab.For(ctx).Error(err)
 		return nil, err
