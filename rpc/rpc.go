@@ -245,6 +245,7 @@ func (l *Link) startResponseRouter() {
 
 		ch := l.deleteFromMap(autogenMessageId)
 
+		// there's no legitimate case where this should be nil - purely defensive.
 		if ch != nil {
 			ch <- rpcResponse{message: res, err: err}
 		}
