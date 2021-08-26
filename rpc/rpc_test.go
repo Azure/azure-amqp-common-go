@@ -34,6 +34,7 @@ func TestResponseRouterBasic(t *testing.T) {
 	result := <-ch
 	require.EqualValues(t, result.message.Data[0], []byte("ID was my message id"))
 	require.Empty(t, receiver.Responses)
+	require.Nil(t, link.responseMap, "Response map is nil'd out after we get a closed error")
 }
 
 func TestResponseRouterMissingMessageID(t *testing.T) {
@@ -180,8 +181,13 @@ func TestRPCFailedSend(t *testing.T) {
 		"status-code": int32(200),
 	}
 
-	sender := &fakeSender{}
+	ch := make(chan struct{})
+
+	sender := &fakeSender{
+		ch: ch,
+	}
 	receiver := &fakeReceiver{
+		ch: ch,
 		Responses: []rpcResponse{
 			{nil, amqp.ErrConnClosed},
 		},
@@ -210,7 +216,6 @@ func TestRPCFailedSend(t *testing.T) {
 	require.EqualError(t, err, context.Canceled.Error())
 
 	require.EqualValues(t, fakeUUID.String(), sender.Sent[0].Properties.MessageID, "Sent message contains a uniquely generated ID")
-	require.Empty(t, l.responseMap, "Response should be auto-deleted when the context is cancelled")
 }
 
 func amqpMessageWithCorrelationId(id string) *amqp.Message {

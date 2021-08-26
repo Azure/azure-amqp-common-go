@@ -284,10 +284,7 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 		}
 	}
 
-	l.responseMu.Lock()
-	responseCh := make(chan rpcResponse, 1)
-	l.responseMap[messageID] = responseCh
-	l.responseMu.Unlock()
+	responseCh := l.addChannelToMap(messageID)
 
 	err = l.sender.Send(ctx, msg)
 
@@ -362,16 +359,6 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 	return response, err
 }
 
-func (l *Link) deleteFromMap(messageID string) chan rpcResponse {
-	l.responseMu.Lock()
-	defer l.responseMu.Unlock()
-
-	ch := l.responseMap[messageID]
-	delete(l.responseMap, messageID)
-
-	return ch
-}
-
 // Close the link receiver, sender and session
 func (l *Link) Close(ctx context.Context) error {
 	ctx, span := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.Close")
@@ -419,6 +406,26 @@ func (l *Link) closeSession(ctx context.Context) error {
 		return l.session.Close(ctx)
 	}
 	return nil
+}
+
+func (l *Link) addChannelToMap(messageID string) chan rpcResponse {
+	l.responseMu.Lock()
+	defer l.responseMu.Unlock()
+
+	responseCh := make(chan rpcResponse, 1)
+	l.responseMap[messageID] = responseCh
+
+	return responseCh
+}
+
+func (l *Link) deleteFromMap(messageID string) chan rpcResponse {
+	l.responseMu.Lock()
+	defer l.responseMu.Unlock()
+
+	ch := l.responseMap[messageID]
+	delete(l.responseMap, messageID)
+
+	return ch
 }
 
 // broadcastError notifies the anyone waiting for a response that the link/session/connection
