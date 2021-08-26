@@ -33,7 +33,7 @@ import (
 
 	"github.com/devigned/tab"
 
-	"github.com/Azure/azure-amqp-common-go/v3"
+	common "github.com/Azure/azure-amqp-common-go/v3"
 	"github.com/Azure/azure-amqp-common-go/v3/internal/tracing"
 	"github.com/Azure/azure-amqp-common-go/v3/uuid"
 	"github.com/Azure/go-amqp"
@@ -48,14 +48,23 @@ const (
 type (
 	// Link is the bidirectional communication structure used for CBS negotiation
 	Link struct {
-		session       *amqp.Session
-		receiver      *amqp.Receiver
-		sender        *amqp.Sender
+		session *amqp.Session
+
+		receiver amqpReceiver // *amqp.Receiver
+		sender   amqpSender   // *amqp.Sender
+
 		clientAddress string
-		rpcMu         sync.Mutex
 		sessionID     *string
 		useSessionID  bool
 		id            string
+
+		responseMu              sync.Mutex
+		startResponseRouterOnce *sync.Once
+		responseMap             map[string]chan rpcResponse
+
+		// for unit tests
+		uuidNewV4     func() (uuid.UUID, error)
+		messageAccept func(message *amqp.Message, ctx context.Context) error
 	}
 
 	// Response is the simplified response structure from an RPC like call
@@ -67,6 +76,22 @@ type (
 
 	// LinkOption provides a way to customize the construction of a Link
 	LinkOption func(link *Link) error
+
+	rpcResponse struct {
+		message *amqp.Message
+		err     error
+	}
+
+	// Actually: *amqp.Receiver
+	amqpReceiver interface {
+		Receive(ctx context.Context) (*amqp.Message, error)
+		Close(ctx context.Context) error
+	}
+
+	amqpSender interface {
+		Send(ctx context.Context, msg *amqp.Message) error
+		Close(ctx context.Context) error
+	}
 )
 
 // LinkWithSessionFilter configures a Link to use a session filter
@@ -100,6 +125,11 @@ func NewLinkWithSession(session *amqp.Session, address string, opts ...LinkOptio
 		session:       session,
 		clientAddress: strings.Replace("$", "", address, -1) + replyPostfix + id,
 		id:            id,
+
+		uuidNewV4:               uuid.NewV4,
+		messageAccept:           (*amqp.Message).Accept,
+		responseMap:             map[string]chan rpcResponse{},
+		startResponseRouterOnce: &sync.Once{},
 	}
 
 	for _, opt := range opts {
@@ -157,6 +187,7 @@ func (l *Link) RetryableRPC(ctx context.Context, times int, delay time.Duration,
 		defer span.End()
 
 		res, err := l.RPC(ctx, msg)
+
 		if err != nil {
 			tab.For(ctx).Error(fmt.Errorf("error in RPC via link %s: %v", l.id, err))
 			return nil, err
@@ -183,19 +214,64 @@ func (l *Link) RetryableRPC(ctx context.Context, times int, delay time.Duration,
 	return res.(*Response), nil
 }
 
+// startResponseRouter is responsible for taking any messages received on the 'response'
+// link and forwarding it to the proper channel. The channel is being select'd by the
+// original `RPC` call.
+func (l *Link) startResponseRouter() {
+	for {
+		res, err := l.receiver.Receive(context.Background())
+
+		// You'll see this when the link is shutting down (either
+		// service-initiated via 'detach' or a user-initiated shutdown)
+		if isClosedError(err) {
+			l.broadcastError(err)
+			break
+		}
+
+		// I don't believe this should happen. The JS version of this same code
+		// ignores errors as well since responses should always be correlated
+		// to actual send requests. So this is just here for completeness.
+		if res == nil {
+			continue
+		}
+
+		autogenMessageId, ok := res.Properties.CorrelationID.(string)
+
+		if !ok {
+			// TODO: it'd be good to track these in some way. We don't have a good way to
+			// forward this on at this point.
+			continue
+		}
+
+		ch := l.deleteFromMap(autogenMessageId)
+
+		// there's no legitimate case where this should be nil - purely defensive.
+		if ch != nil {
+			ch <- rpcResponse{message: res, err: err}
+		}
+	}
+}
+
 // RPC sends a request and waits on a response for that request
 func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
-	const altStatusCodeKey, altDescriptionKey = "statusCode", "statusDescription"
+	l.startResponseRouterOnce.Do(func() {
+		go l.startResponseRouter()
+	})
 
-	l.rpcMu.Lock()
-	defer l.rpcMu.Unlock()
+	copiedMessage, messageID, err := addMessageID(msg, l.uuidNewV4)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// use the copiedMessage from this point
+	msg = copiedMessage
+
+	const altStatusCodeKey, altDescriptionKey = "statusCode", "statusDescription"
 
 	ctx, span := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.RPC")
 	defer span.End()
 
-	if msg.Properties == nil {
-		msg.Properties = &amqp.MessageProperties{}
-	}
 	msg.Properties.ReplyTo = l.clientAddress
 
 	if msg.ApplicationProperties == nil {
@@ -208,13 +284,28 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 		}
 	}
 
-	err := l.sender.Send(ctx, msg)
+	responseCh := l.addChannelToMap(messageID)
+
+	err = l.sender.Send(ctx, msg)
+
 	if err != nil {
+		l.deleteFromMap(messageID)
 		tab.For(ctx).Error(err)
 		return nil, err
 	}
 
-	res, err := l.receiver.Receive(ctx)
+	var res *amqp.Message
+
+	select {
+	case <-ctx.Done():
+		l.deleteFromMap(messageID)
+		res, err = nil, ctx.Err()
+	case resp := <-responseCh:
+		// this will get triggered by the loop in 'startReceiverRouter' when it receives
+		// a message with our autoGenMessageID set in the correlation_id property.
+		res, err = resp.message, resp.err
+	}
+
 	if err != nil {
 		tab.For(ctx).Error(err)
 		return nil, err
@@ -260,7 +351,7 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 		Message:     res,
 	}
 
-	if err := res.Accept(ctx); err != nil {
+	if err := l.messageAccept(res, ctx); err != nil {
 		tab.For(ctx).Error(err)
 		return response, err
 	}
@@ -315,4 +406,78 @@ func (l *Link) closeSession(ctx context.Context) error {
 		return l.session.Close(ctx)
 	}
 	return nil
+}
+
+func (l *Link) addChannelToMap(messageID string) chan rpcResponse {
+	l.responseMu.Lock()
+	defer l.responseMu.Unlock()
+
+	responseCh := make(chan rpcResponse, 1)
+	l.responseMap[messageID] = responseCh
+
+	return responseCh
+}
+
+func (l *Link) deleteFromMap(messageID string) chan rpcResponse {
+	l.responseMu.Lock()
+	defer l.responseMu.Unlock()
+
+	ch := l.responseMap[messageID]
+	delete(l.responseMap, messageID)
+
+	return ch
+}
+
+// broadcastError notifies the anyone waiting for a response that the link/session/connection
+// has closed.
+func (l *Link) broadcastError(err error) {
+	l.responseMu.Lock()
+	defer l.responseMu.Unlock()
+
+	for _, ch := range l.responseMap {
+		ch <- rpcResponse{err: err}
+	}
+
+	l.responseMap = nil
+}
+
+// addMessageID generates a unique UUID for the message. When the service
+// responds it will fill out the correlation ID property of the response
+// with this ID, allowing us to link the request and response together.
+//
+// NOTE: this function copies 'message', adding in a 'Properties' object
+// if it does not already exist.
+func addMessageID(message *amqp.Message, uuidNewV4 func() (uuid.UUID, error)) (*amqp.Message, string, error) {
+	uuid, err := uuidNewV4()
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	autoGenMessageID := uuid.String()
+
+	// we need to modify the message so we'll make a copy
+	copiedMessage := *message
+
+	if message.Properties == nil {
+		copiedMessage.Properties = &amqp.MessageProperties{
+			MessageID: autoGenMessageID,
+		}
+	} else {
+		// properties already exist, make a copy and then update
+		// the message ID
+		copiedProperties := *message.Properties
+		copiedProperties.MessageID = autoGenMessageID
+
+		copiedMessage.Properties = &copiedProperties
+	}
+
+	return &copiedMessage, autoGenMessageID, nil
+}
+
+func isClosedError(err error) bool {
+	return errors.Is(err, amqp.ErrLinkClosed) ||
+		errors.Is(err, amqp.ErrLinkDetached) ||
+		errors.Is(err, amqp.ErrConnClosed) ||
+		errors.Is(err, amqp.ErrSessionClosed)
 }
