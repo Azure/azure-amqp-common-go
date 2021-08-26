@@ -223,21 +223,8 @@ func (l *Link) startResponseRouter() {
 
 		// You'll see this when the link is shutting down (either
 		// service-initiated via 'detach' or a user-initiated shutdown)
-		if errors.Is(err, amqp.ErrLinkClosed) ||
-			errors.Is(err, amqp.ErrLinkDetached) ||
-			errors.Is(err, amqp.ErrConnClosed) ||
-			errors.Is(err, amqp.ErrSessionClosed) {
-
-			// before we break notify everyone that's waiting that the connection
-			// is gone.
-			l.responseMu.Lock()
-			for _, ch := range l.responseMap {
-				ch <- rpcResponse{err: err}
-			}
-
-			l.responseMap = map[string]chan rpcResponse{}
-			l.responseMu.Unlock()
-
+		if isClosedError(err) {
+			l.broadcastError(err)
 			break
 		}
 
@@ -248,7 +235,14 @@ func (l *Link) startResponseRouter() {
 			continue
 		}
 
-		autogenMessageId := res.Properties.CorrelationID.(string)
+		autogenMessageId, ok := res.Properties.CorrelationID.(string)
+
+		if !ok {
+			// TODO: it'd be good to track these in some way. We don't have a good way to
+			// forward this on at this point.
+			continue
+		}
+
 		ch := l.deleteFromMap(autogenMessageId)
 
 		if ch != nil {
@@ -425,6 +419,19 @@ func (l *Link) closeSession(ctx context.Context) error {
 	return nil
 }
 
+// broadcastError notifies the anyone waiting for a response that the link/session/connection
+// has closed.
+func (l *Link) broadcastError(err error) {
+	l.responseMu.Lock()
+	defer l.responseMu.Unlock()
+
+	for _, ch := range l.responseMap {
+		ch <- rpcResponse{err: err}
+	}
+
+	l.responseMap = map[string]chan rpcResponse{}
+}
+
 // addMessageID generates a unique UUID for the message. When the service
 // responds it will fill out the correlation ID property of the response
 // with this ID, allowing us to link the request and response together.
@@ -457,4 +464,11 @@ func addMessageID(message *amqp.Message, uuidNewV4 func() (uuid.UUID, error)) (*
 	}
 
 	return &copiedMessage, autoGenMessageID, nil
+}
+
+func isClosedError(err error) bool {
+	return errors.Is(err, amqp.ErrLinkClosed) ||
+		errors.Is(err, amqp.ErrLinkDetached) ||
+		errors.Is(err, amqp.ErrConnClosed) ||
+		errors.Is(err, amqp.ErrSessionClosed)
 }
