@@ -364,9 +364,10 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 
 func (l *Link) deleteFromMap(messageID string) chan rpcResponse {
 	l.responseMu.Lock()
+	defer l.responseMu.Unlock()
+
 	ch := l.responseMap[messageID]
 	delete(l.responseMap, messageID)
-	l.responseMu.Unlock()
 
 	return ch
 }
