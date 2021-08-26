@@ -429,7 +429,7 @@ func (l *Link) broadcastError(err error) {
 		ch <- rpcResponse{err: err}
 	}
 
-	l.responseMap = map[string]chan rpcResponse{}
+	l.responseMap = nil
 }
 
 // addMessageID generates a unique UUID for the message. When the service
