@@ -1,7 +1,8 @@
 # Change Log
 
 ## `v3.1.1`
-- Change `Link` so it can handle parallel requests.
+- Change `Link` so it can handle parallel requests. 
+  [PR#52](https://github.com/Azure/azure-amqp-common-go/pull/52)
 
 ## `v3.1.0`
 - Add support for passing managed identity user-assigned client ID.
