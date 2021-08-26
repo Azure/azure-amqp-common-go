@@ -1,7 +1,18 @@
 # Change Log
 
-## `head`
-- fix refresh error to return the underlying http error instead of the token
+## `v3.1.1`
+- Change `Link` so it can handle parallel requests.
+
+## `v3.1.0`
+- Add support for passing managed identity user-assigned client ID.
+
+## `v3.0.1`
+- add context to message deposition methods
+- update dependencies
+
+## `v3.0.0`
+- switch from pack.ag/amqp to github.com/Azure/go-amqp
+- bump major version
 
 ## `v2.1.1`
 - bump amqp to v0.12.1
