@@ -54,6 +54,29 @@ func TestResponseRouterMissingMessageID(t *testing.T) {
 	require.Empty(t, receiver.Responses)
 }
 
+func TestResponseRouterBadCorrelationID(t *testing.T) {
+	messageWithBadCorrelationID := &amqp.Message{
+		Properties: &amqp.MessageProperties{
+			CorrelationID: uint64(1),
+		},
+	}
+
+	receiver := &fakeReceiver{
+		Responses: []rpcResponse{
+			{messageWithBadCorrelationID, nil},
+			{nil, amqp.ErrLinkClosed},
+		},
+	}
+
+	link := &Link{
+		responseMap: map[string]chan rpcResponse{},
+		receiver:    receiver,
+	}
+
+	link.startResponseRouter()
+	require.Empty(t, receiver.Responses)
+}
+
 func TestResponseRouterFatalErrors(t *testing.T) {
 	fatalErrors := []error{
 		amqp.ErrLinkClosed,
