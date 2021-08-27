@@ -2,7 +2,7 @@
 
 ## `v3.1.2`
 - Change the default credits for the RPC link to be more reasonable (1000)
-  [PR#TBD]()
+  [PR#54](https://github.com/Azure/azure-amqp-common-go/pull/54)
 
 ## `v3.1.1`
 - Change `Link` so it can handle parallel requests. 
