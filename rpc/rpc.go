@@ -243,9 +243,8 @@ func (l *Link) startResponseRouter() {
 			continue
 		}
 
-		ch := l.deleteFromMap(autogenMessageId)
+		ch := l.deleteChannelFromMap(autogenMessageId)
 
-		// there's no legitimate case where this should be nil - purely defensive.
 		if ch != nil {
 			ch <- rpcResponse{message: res, err: err}
 		}
@@ -286,10 +285,14 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 
 	responseCh := l.addChannelToMap(messageID)
 
+	if responseCh == nil {
+		return nil, amqp.ErrLinkClosed
+	}
+
 	err = l.sender.Send(ctx, msg)
 
 	if err != nil {
-		l.deleteFromMap(messageID)
+		l.deleteChannelFromMap(messageID)
 		tab.For(ctx).Error(err)
 		return nil, err
 	}
@@ -298,7 +301,7 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 
 	select {
 	case <-ctx.Done():
-		l.deleteFromMap(messageID)
+		l.deleteChannelFromMap(messageID)
 		res, err = nil, ctx.Err()
 	case resp := <-responseCh:
 		// this will get triggered by the loop in 'startReceiverRouter' when it receives
@@ -408,9 +411,17 @@ func (l *Link) closeSession(ctx context.Context) error {
 	return nil
 }
 
+// addChannelToMap adds a channel which will be used by the response router to
+// notify when there is a response to the request.
+// If l.responseMap is nil (for instance, via broadcastError) this function will
+// return nil.
 func (l *Link) addChannelToMap(messageID string) chan rpcResponse {
 	l.responseMu.Lock()
 	defer l.responseMu.Unlock()
+
+	if l.responseMap == nil {
+		return nil
+	}
 
 	responseCh := make(chan rpcResponse, 1)
 	l.responseMap[messageID] = responseCh
@@ -418,9 +429,17 @@ func (l *Link) addChannelToMap(messageID string) chan rpcResponse {
 	return responseCh
 }
 
-func (l *Link) deleteFromMap(messageID string) chan rpcResponse {
+// deleteChannelFromMap removes the message from our internal map and returns
+// a channel that the corresponding RPC() call is waiting on.
+// If l.responseMap is nil (for instance, via broadcastError) this function will
+// return nil.
+func (l *Link) deleteChannelFromMap(messageID string) chan rpcResponse {
 	l.responseMu.Lock()
 	defer l.responseMu.Unlock()
+
+	if l.responseMap == nil {
+		return nil
+	}
 
 	ch := l.responseMap[messageID]
 	delete(l.responseMap, messageID)

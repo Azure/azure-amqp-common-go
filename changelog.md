@@ -1,5 +1,10 @@
 # Change Log
 
+## `v3.1.2`
+- Fixing a potential race condition when an RPC link is shut down while still sending requests
+  or handling responses.
+  [PR#TBD](TBD)
+
 ## `v3.1.1`
 - Change `Link` so it can handle parallel requests. 
   [PR#52](https://github.com/Azure/azure-amqp-common-go/pull/52)
