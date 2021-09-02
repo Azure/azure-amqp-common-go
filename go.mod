@@ -11,5 +11,3 @@ require (
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
 )
-
-replace github.com/Azure/go-amqp v0.13.13 => github.com/serbrech/go-amqp v0.13.2-0.20210831215711-a68457cdbcc0
