@@ -4,6 +4,7 @@
 - Fixing a potential race condition when an RPC link is shut down while still sending requests
   or handling responses.
   [PR#55](https://github.com/Azure/azure-amqp-common-go/pull/55)
+- Upgrading to go-amqp v0.13.13, which fixes an issue with simultaneous settling on the rpc link.
 
 ## `v3.1.1`
 - Change `Link` so it can handle parallel requests. 
