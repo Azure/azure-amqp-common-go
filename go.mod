@@ -3,7 +3,7 @@ module github.com/Azure/azure-amqp-common-go/v3
 go 1.12
 
 require (
-	github.com/Azure/go-amqp v0.13.11
+	github.com/Azure/go-amqp v0.13.13
 	github.com/Azure/go-autorest/autorest v0.11.18
 	github.com/Azure/go-autorest/autorest/adal v0.9.13
 	github.com/davecgh/go-spew v1.1.1 // indirect

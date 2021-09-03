@@ -241,6 +241,45 @@ func TestRPCFailedSend(t *testing.T) {
 	require.EqualValues(t, fakeUUID.String(), sender.Sent[0].Properties.MessageID, "Sent message contains a uniquely generated ID")
 }
 
+func TestRPCNilMessageMap(t *testing.T) {
+	fakeSender := &fakeSender{}
+	fakeReceiver := &fakeReceiver{
+		Responses: []rpcResponse{
+			// this should let us see what deleteChannelFromMap does
+			{amqpMessageWithCorrelationId("hello"), nil},
+			{nil, amqp.ErrLinkClosed},
+		},
+	}
+
+	link := &Link{
+		sender:   fakeSender,
+		receiver: fakeReceiver,
+		// responseMap is nil if the broadcastError() function is called. Since this can be
+		// at any time our individual map functions need to handle the map not being
+		// there.
+		responseMap:             nil,
+		startResponseRouterOnce: &sync.Once{},
+		uuidNewV4:               uuid.NewV4,
+	}
+
+	// sanity check - all the map/channel functions are returning nil
+	require.Nil(t, link.addChannelToMap("hello"))
+	require.Nil(t, link.deleteChannelFromMap("hello"))
+
+	link.startResponseRouter()
+
+	require.Empty(t, fakeReceiver.Responses, "All responses are used")
+
+	// we're not testing the responseRouter for this second part, so just short-circuit
+	// the running.
+	link.startResponseRouterOnce.Do(func() {})
+
+	// now check that sending can handle it.
+	resp, err := link.RPC(context.Background(), &amqp.Message{})
+	require.Error(t, err, amqp.ErrLinkClosed.Error())
+	require.Nil(t, resp)
+}
+
 func amqpMessageWithCorrelationId(id string) *amqp.Message {
 	return &amqp.Message{
 		Data: [][]byte{[]byte(fmt.Sprintf("ID was %s", id))},
