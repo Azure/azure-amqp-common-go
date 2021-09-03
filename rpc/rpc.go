@@ -40,9 +40,10 @@ import (
 )
 
 const (
-	replyPostfix   = "-reply-to-"
-	statusCodeKey  = "status-code"
-	descriptionKey = "status-description"
+	replyPostfix           = "-reply-to-"
+	statusCodeKey          = "status-code"
+	descriptionKey         = "status-description"
+	defaultReceiverCredits = 1000
 )
 
 type (
@@ -148,6 +149,7 @@ func NewLinkWithSession(session *amqp.Session, address string, opts ...LinkOptio
 	receiverOpts := []amqp.LinkOption{
 		amqp.LinkSourceAddress(address),
 		amqp.LinkTargetAddress(link.clientAddress),
+		amqp.LinkCredit(defaultReceiverCredits),
 	}
 
 	if link.sessionID != nil {

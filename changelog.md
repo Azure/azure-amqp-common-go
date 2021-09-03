@@ -1,5 +1,9 @@
 # Change Log
 
+## `v3.2.0`
+- Change the default credits for the RPC link to be more reasonable (1000)
+  [PR#54](https://github.com/Azure/azure-amqp-common-go/pull/54)
+
 ## `v3.1.2`
 - Fixing a potential race condition when an RPC link is shut down while still sending requests
   or handling responses.
