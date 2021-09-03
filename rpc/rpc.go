@@ -241,7 +241,7 @@ func (l *Link) startResponseRouter() {
 				return
 			}
 
-			autogenMessageId, ok := res.Properties.CorrelationID.(string)
+			autogenMessageID, ok := res.Properties.CorrelationID.(string)
 
 			if !ok {
 				// TODO: it'd be good to track these in some way. We don't have a good way to
@@ -249,7 +249,7 @@ func (l *Link) startResponseRouter() {
 				return
 			}
 
-			ch := l.deleteChannelFromMap(autogenMessageId)
+			ch := l.deleteChannelFromMap(autogenMessageID)
 
 			if ch != nil {
 				ch <- rpcResponse{message: res, err: err}
