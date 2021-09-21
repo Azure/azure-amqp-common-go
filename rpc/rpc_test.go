@@ -180,7 +180,7 @@ func TestRPCBasic(t *testing.T) {
 		uuidNewV4: func() (uuid.UUID, error) {
 			return fakeUUID, nil
 		},
-		messageAccept: func(message *amqp.Message, ctx context.Context) error {
+		messageAccept: func(ctx context.Context, message *amqp.Message) error {
 			return nil
 		},
 	}
@@ -225,7 +225,7 @@ func TestRPCFailedSend(t *testing.T) {
 		uuidNewV4: func() (uuid.UUID, error) {
 			return fakeUUID, nil
 		},
-		messageAccept: func(message *amqp.Message, ctx context.Context) error {
+		messageAccept: func(ctx context.Context, message *amqp.Message) error {
 			panic("Should not be called")
 		},
 	}
