@@ -65,7 +65,7 @@ type (
 
 		// for unit tests
 		uuidNewV4     func() (uuid.UUID, error)
-		messageAccept func(message *amqp.Message, ctx context.Context) error
+		messageAccept func(ctx context.Context, message *amqp.Message) error
 	}
 
 	// Response is the simplified response structure from an RPC like call
@@ -128,7 +128,6 @@ func NewLinkWithSession(session *amqp.Session, address string, opts ...LinkOptio
 		id:            id,
 
 		uuidNewV4:               uuid.NewV4,
-		messageAccept:           (*amqp.Message).Accept,
 		responseMap:             map[string]chan rpcResponse{},
 		startResponseRouterOnce: &sync.Once{},
 	}
@@ -160,7 +159,6 @@ func NewLinkWithSession(session *amqp.Session, address string, opts ...LinkOptio
 		} else {
 			receiverOpts = append(receiverOpts, amqp.LinkSourceFilter(name, code, link.sessionID))
 		}
-		receiverOpts = append(receiverOpts)
 	}
 
 	receiver, err := session.NewReceiver(receiverOpts...)
@@ -175,6 +173,7 @@ func NewLinkWithSession(session *amqp.Session, address string, opts ...LinkOptio
 
 	link.sender = sender
 	link.receiver = receiver
+	link.messageAccept = receiver.AcceptMessage
 
 	return link, nil
 }
@@ -356,7 +355,7 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 		Message:     res,
 	}
 
-	if err := l.messageAccept(res, ctx); err != nil {
+	if err := l.messageAccept(ctx, res); err != nil {
 		tab.For(ctx).Error(err)
 		return response, err
 	}
