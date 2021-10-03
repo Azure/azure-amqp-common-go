@@ -216,39 +216,44 @@ func (l *Link) RetryableRPC(ctx context.Context, times int, delay time.Duration,
 }
 
 // startResponseRouter is responsible for taking any messages received on the 'response'
-// link and forwarding it to the proper channel. The channel is being select'd by the
+// link and forwarding it to the proper channel. The channel is being selected by the
 // original `RPC` call.
 func (l *Link) startResponseRouter() {
+	const concurrentReceive = 10
+	concurrencyTokens := make(chan struct{}, concurrentReceive)
 	for {
-		res, err := l.receiver.Receive(context.Background())
+		res, resError := l.receiver.Receive(context.Background())
+		concurrencyTokens <- struct{}{}
+		go func(msg *amqp.Message, err error) {
+			defer func() { <-concurrencyTokens }()
+			// You'll see this when the link is shutting down (either
+			// service-initiated via 'detach' or a user-initiated shutdown)
+			if isClosedError(err) {
+				l.broadcastError(err)
+				return
+			}
 
-		// You'll see this when the link is shutting down (either
-		// service-initiated via 'detach' or a user-initiated shutdown)
-		if isClosedError(err) {
-			l.broadcastError(err)
-			break
-		}
+			// I don't believe this should happen. The JS version of this same code
+			// ignores errors as well since responses should always be correlated
+			// to actual send requests. So this is just here for completeness.
+			if res == nil {
+				return
+			}
 
-		// I don't believe this should happen. The JS version of this same code
-		// ignores errors as well since responses should always be correlated
-		// to actual send requests. So this is just here for completeness.
-		if res == nil {
-			continue
-		}
+			autogenMessageID, ok := res.Properties.CorrelationID.(string)
 
-		autogenMessageId, ok := res.Properties.CorrelationID.(string)
+			if !ok {
+				// TODO: it'd be good to track these in some way. We don't have a good way to
+				// forward this on at this point.
+				return
+			}
 
-		if !ok {
-			// TODO: it'd be good to track these in some way. We don't have a good way to
-			// forward this on at this point.
-			continue
-		}
+			ch := l.deleteChannelFromMap(autogenMessageID)
 
-		ch := l.deleteChannelFromMap(autogenMessageId)
-
-		if ch != nil {
-			ch <- rpcResponse{message: res, err: err}
-		}
+			if ch != nil {
+				ch <- rpcResponse{message: res, err: err}
+			}
+		}(res, resError)
 	}
 }
 
@@ -285,6 +290,13 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 	}
 
 	responseCh := l.addChannelToMap(messageID)
+
+	// when the connection is closed, the rpc link broadcasts the error to all response channel and nils the map.
+	// the map could be nil at this point, which would mean that the amqp connection was closed.
+	// that's why we retun an ErrConnClosed at this point
+	if responseCh == nil {
+		return nil, amqp.ErrConnClosed
+	}
 
 	if responseCh == nil {
 		return nil, amqp.ErrLinkClosed
@@ -438,10 +450,11 @@ func (l *Link) deleteChannelFromMap(messageID string) chan rpcResponse {
 	l.responseMu.Lock()
 	defer l.responseMu.Unlock()
 
+	// broadcastError nils the channel when the underlying session/connection has been closed.
+	// so it's possible that the map has become nil between the moment we added a response channel, and the moment we remove it.
 	if l.responseMap == nil {
 		return nil
 	}
-
 	ch := l.responseMap[messageID]
 	delete(l.responseMap, messageID)
 

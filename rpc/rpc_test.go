@@ -16,7 +16,7 @@ import (
 func TestResponseRouterBasic(t *testing.T) {
 	receiver := &fakeReceiver{
 		Responses: []rpcResponse{
-			{amqpMessageWithCorrelationId("my message id"), nil},
+			{amqpMessageWithCorrelationID("my message id"), nil},
 			{nil, amqp.ErrLinkClosed},
 		},
 	}
@@ -40,7 +40,7 @@ func TestResponseRouterBasic(t *testing.T) {
 func TestResponseRouterMissingMessageID(t *testing.T) {
 	receiver := &fakeReceiver{
 		Responses: []rpcResponse{
-			{amqpMessageWithCorrelationId("my message id"), nil},
+			{amqpMessageWithCorrelationID("my message id"), nil},
 			{nil, amqp.ErrLinkClosed},
 		},
 	}
@@ -156,7 +156,7 @@ func TestAddMessageID(t *testing.T) {
 
 func TestRPCBasic(t *testing.T) {
 	fakeUUID := uuid.UUID([16]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15})
-	replyMessage := amqpMessageWithCorrelationId(fakeUUID.String())
+	replyMessage := amqpMessageWithCorrelationID(fakeUUID.String())
 	replyMessage.ApplicationProperties = map[string]interface{}{
 		"status-code": int32(200),
 	}
@@ -199,7 +199,7 @@ func TestRPCFailedSend(t *testing.T) {
 	// important bit is that we clean up the channel we stored in the map
 	// since we're no longer waiting for the response.
 	fakeUUID := uuid.UUID([16]byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15})
-	replyMessage := amqpMessageWithCorrelationId(fakeUUID.String())
+	replyMessage := amqpMessageWithCorrelationID(fakeUUID.String())
 	replyMessage.ApplicationProperties = map[string]interface{}{
 		"status-code": int32(200),
 	}
@@ -246,7 +246,7 @@ func TestRPCNilMessageMap(t *testing.T) {
 	fakeReceiver := &fakeReceiver{
 		Responses: []rpcResponse{
 			// this should let us see what deleteChannelFromMap does
-			{amqpMessageWithCorrelationId("hello"), nil},
+			{amqpMessageWithCorrelationID("hello"), nil},
 			{nil, amqp.ErrLinkClosed},
 		},
 	}
@@ -280,7 +280,7 @@ func TestRPCNilMessageMap(t *testing.T) {
 	require.Nil(t, resp)
 }
 
-func amqpMessageWithCorrelationId(id string) *amqp.Message {
+func amqpMessageWithCorrelationID(id string) *amqp.Message {
 	return &amqp.Message{
 		Data: [][]byte{[]byte(fmt.Sprintf("ID was %s", id))},
 		Properties: &amqp.MessageProperties{
@@ -314,11 +314,11 @@ type fakeSender struct {
 	ch   chan<- struct{}
 }
 
-func (s *fakeSender) Send(ctx context.Context, msg *amqp.Message) error {
-	s.Sent = append(s.Sent, msg)
+func (fs *fakeSender) Send(ctx context.Context, msg *amqp.Message) error {
+	fs.Sent = append(fs.Sent, msg)
 
-	if s.ch != nil {
-		close(s.ch)
+	if fs.ch != nil {
+		close(fs.ch)
 	}
 
 	return nil
