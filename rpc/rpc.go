@@ -87,6 +87,7 @@ type (
 	amqpReceiver interface {
 		Receive(ctx context.Context) (*amqp.Message, error)
 		Close(ctx context.Context) error
+		IsAlive() bool
 	}
 
 	amqpSender interface {
@@ -219,6 +220,7 @@ func (l *Link) RetryableRPC(ctx context.Context, times int, delay time.Duration,
 // link and forwarding it to the proper channel. The channel is being select'd by the
 // original `RPC` call.
 func (l *Link) startResponseRouter() {
+	defer func() { l.startResponseRouterOnce = &sync.Once{} }()
 	for {
 		res, err := l.receiver.Receive(context.Background())
 
@@ -500,4 +502,10 @@ func isClosedError(err error) bool {
 		errors.Is(err, amqp.ErrLinkDetached) ||
 		errors.Is(err, amqp.ErrConnClosed) ||
 		errors.Is(err, amqp.ErrSessionClosed)
+}
+
+// IsAlive returns false if the link is closed or if it is
+// in a detached state, and returns true otherwise
+func (l *Link) IsAlive() bool {
+	return l.receiver.IsAlive()
 }
