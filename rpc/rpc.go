@@ -499,8 +499,10 @@ func addMessageID(message *amqp.Message, uuidNewV4 func() (uuid.UUID, error)) (*
 }
 
 func isClosedError(err error) bool {
+	var detachError *amqp.DetachError
+
 	return errors.Is(err, amqp.ErrLinkClosed) ||
-		errors.Is(err, amqp.ErrLinkDetached) ||
+		errors.As(err, &detachError) ||
 		errors.Is(err, amqp.ErrConnClosed) ||
 		errors.Is(err, amqp.ErrSessionClosed)
 }
