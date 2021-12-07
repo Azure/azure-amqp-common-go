@@ -80,7 +80,7 @@ func TestResponseRouterBadCorrelationID(t *testing.T) {
 func TestResponseRouterFatalErrors(t *testing.T) {
 	fatalErrors := []error{
 		amqp.ErrLinkClosed,
-		amqp.ErrLinkDetached,
+		&amqp.DetachError{},
 		amqp.ErrConnClosed,
 		amqp.ErrSessionClosed,
 	}
