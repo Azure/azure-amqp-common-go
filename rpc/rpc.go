@@ -275,7 +275,7 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 	ctx, span := tracing.StartSpanFromContext(ctx, "az-amqp-common.rpc.RPC")
 	defer span.End()
 
-	msg.Properties.ReplyTo = l.clientAddress
+	msg.Properties.ReplyTo = &l.clientAddress
 
 	if msg.ApplicationProperties == nil {
 		msg.ApplicationProperties = make(map[string]interface{})
