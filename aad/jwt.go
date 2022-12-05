@@ -28,7 +28,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
@@ -164,7 +163,7 @@ func (c *TokenProviderConfiguration) NewServicePrincipalToken() (*adal.ServicePr
 
 	// 2. Client Certificate
 	if c.CertificatePath != "" {
-		certData, err := ioutil.ReadFile(c.CertificatePath)
+		certData, err := os.ReadFile(c.CertificatePath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read the certificate file (%s): %v", c.CertificatePath, err)
 		}
