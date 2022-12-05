@@ -512,7 +512,7 @@ func isClosedError(err error) bool {
 	var sessionError *amqp.SessionError
 	var detachError *amqp.DetachError
 
-	return errors.As(err, &detachError) ||
+	return (errors.As(err, &detachError) && detachError.RemoteErr == nil) ||
 		errors.As(err, &sessionError) ||
 		errors.As(err, &connError)
 }
