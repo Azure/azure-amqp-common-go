@@ -58,7 +58,7 @@ type (
 
 // TokenProviderWithEnvironmentVars creates a new SAS TokenProvider from environment variables
 //
-// There are two sets of environment variables which can produce a SAS TokenProvider
+// # There are two sets of environment variables which can produce a SAS TokenProvider
 //
 // 1) Expected Environment Variables:
 //   - "EVENTHUB_KEY_NAME" the name of the Event Hub key
