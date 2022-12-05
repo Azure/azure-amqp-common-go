@@ -17,7 +17,7 @@ func TestResponseRouterBasic(t *testing.T) {
 	receiver := &fakeReceiver{
 		Responses: []rpcResponse{
 			{amqpMessageWithCorrelationId("my message id"), nil},
-			{nil, amqp.ErrLinkClosed},
+			{nil, &amqp.DetachError{}},
 		},
 	}
 
@@ -41,7 +41,7 @@ func TestResponseRouterMissingMessageID(t *testing.T) {
 	receiver := &fakeReceiver{
 		Responses: []rpcResponse{
 			{amqpMessageWithCorrelationId("my message id"), nil},
-			{nil, amqp.ErrLinkClosed},
+			{nil, &amqp.DetachError{}},
 		},
 	}
 
@@ -64,7 +64,7 @@ func TestResponseRouterBadCorrelationID(t *testing.T) {
 	receiver := &fakeReceiver{
 		Responses: []rpcResponse{
 			{messageWithBadCorrelationID, nil},
-			{nil, amqp.ErrLinkClosed},
+			{nil, &amqp.DetachError{}},
 		},
 	}
 
@@ -79,10 +79,9 @@ func TestResponseRouterBadCorrelationID(t *testing.T) {
 
 func TestResponseRouterFatalErrors(t *testing.T) {
 	fatalErrors := []error{
-		amqp.ErrLinkClosed,
 		&amqp.DetachError{},
-		amqp.ErrConnClosed,
-		amqp.ErrSessionClosed,
+		&amqp.ConnError{},
+		&amqp.SessionError{},
 	}
 
 	for _, fatalError := range fatalErrors {
@@ -121,7 +120,7 @@ func TestResponseRouterNoResponse(t *testing.T) {
 	receiver := &fakeReceiver{
 		Responses: []rpcResponse{
 			{nil, errors.New("Some other error that will get ignored since we can't route it to anyone (ie: no message ID)")},
-			{nil, amqp.ErrConnClosed},
+			{nil, &amqp.ConnError{}},
 		},
 	}
 
@@ -166,7 +165,7 @@ func TestRPCBasic(t *testing.T) {
 	receiver := &fakeReceiver{
 		Responses: []rpcResponse{
 			{replyMessage, nil},
-			{nil, amqp.ErrConnClosed},
+			{nil, &amqp.ConnError{}},
 		},
 		ch: ch,
 	}
@@ -212,7 +211,7 @@ func TestRPCFailedSend(t *testing.T) {
 	receiver := &fakeReceiver{
 		ch: ch,
 		Responses: []rpcResponse{
-			{nil, amqp.ErrConnClosed},
+			{nil, &amqp.ConnError{}},
 		},
 	}
 
@@ -247,7 +246,7 @@ func TestRPCNilMessageMap(t *testing.T) {
 		Responses: []rpcResponse{
 			// this should let us see what deleteChannelFromMap does
 			{amqpMessageWithCorrelationId("hello"), nil},
-			{nil, amqp.ErrLinkClosed},
+			{nil, &amqp.DetachError{}},
 		},
 	}
 
@@ -276,7 +275,8 @@ func TestRPCNilMessageMap(t *testing.T) {
 
 	// now check that sending can handle it.
 	resp, err := link.RPC(context.Background(), &amqp.Message{})
-	require.Error(t, err, amqp.ErrLinkClosed.Error())
+	var detachErr *amqp.DetachError
+	require.ErrorAs(t, err, &detachErr)
 	require.Nil(t, resp)
 }
 

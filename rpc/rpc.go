@@ -105,17 +105,29 @@ func LinkWithSessionFilter(sessionID *string) LinkOption {
 }
 
 // NewLink will build a new request response link
-func NewLink(conn *amqp.Client, address string, opts ...LinkOption) (*Link, error) {
-	authSession, err := conn.NewSession()
+// Deprecated: use NewLinkWithContext instead.
+func NewLink(conn *amqp.Conn, address string, opts ...LinkOption) (*Link, error) {
+	return NewLinkWithContext(context.Background(), conn, address, opts...)
+}
+
+// NewLinkWithContext will build a new request response link
+func NewLinkWithContext(ctx context.Context, conn *amqp.Conn, address string, opts ...LinkOption) (*Link, error) {
+	authSession, err := conn.NewSession(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewLinkWithSession(authSession, address, opts...)
+	return NewLinkWithSessionWithContext(ctx, authSession, address, opts...)
 }
 
 // NewLinkWithSession will build a new request response link, but will reuse an existing AMQP session
+// Deprecated: use NewLinkWithSessionWithContext instead.
 func NewLinkWithSession(session *amqp.Session, address string, opts ...LinkOption) (*Link, error) {
+	return NewLinkWithSessionWithContext(context.Background(), session, address, opts...)
+}
+
+// NewLinkWithSessionWithContext will build a new request response link, but will reuse an existing AMQP session
+func NewLinkWithSessionWithContext(ctx context.Context, session *amqp.Session, address string, opts ...LinkOption) (*Link, error) {
 	linkID, err := uuid.NewV4()
 	if err != nil {
 		return nil, err
@@ -138,33 +150,30 @@ func NewLinkWithSession(session *amqp.Session, address string, opts ...LinkOptio
 		}
 	}
 
-	sender, err := session.NewSender(
-		amqp.LinkTargetAddress(address),
-	)
+	sender, err := session.NewSender(ctx, address, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	receiverOpts := []amqp.LinkOption{
-		amqp.LinkSourceAddress(address),
-		amqp.LinkTargetAddress(link.clientAddress),
-		amqp.LinkCredit(defaultReceiverCredits),
+	receiverOpts := amqp.ReceiverOptions{
+		Credit:        defaultReceiverCredits,
+		TargetAddress: link.clientAddress,
 	}
 
 	if link.sessionID != nil {
 		const name = "com.microsoft:session-filter"
 		const code = uint64(0x00000137000000C)
 		if link.sessionID == nil {
-			receiverOpts = append(receiverOpts, amqp.LinkSourceFilter(name, code, nil))
+			receiverOpts.Filters = append(receiverOpts.Filters, amqp.NewLinkFilter(name, code, nil))
 		} else {
-			receiverOpts = append(receiverOpts, amqp.LinkSourceFilter(name, code, link.sessionID))
+			receiverOpts.Filters = append(receiverOpts.Filters, amqp.NewLinkFilter(name, code, link.sessionID))
 		}
 	}
 
-	receiver, err := session.NewReceiver(receiverOpts...)
+	receiver, err := session.NewReceiver(ctx, address, &receiverOpts)
 	if err != nil {
 		// make sure we close the sender
-		clsCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		clsCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 
 		_ = sender.Close(clsCtx)
@@ -290,7 +299,7 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 	responseCh := l.addChannelToMap(messageID)
 
 	if responseCh == nil {
-		return nil, amqp.ErrLinkClosed
+		return nil, &amqp.DetachError{}
 	}
 
 	err = l.sender.Send(ctx, msg)
@@ -499,10 +508,11 @@ func addMessageID(message *amqp.Message, uuidNewV4 func() (uuid.UUID, error)) (*
 }
 
 func isClosedError(err error) bool {
+	var connError *amqp.ConnError
+	var sessionError *amqp.SessionError
 	var detachError *amqp.DetachError
 
-	return errors.Is(err, amqp.ErrLinkClosed) ||
-		errors.As(err, &detachError) ||
-		errors.Is(err, amqp.ErrConnClosed) ||
-		errors.Is(err, amqp.ErrSessionClosed)
+	return errors.As(err, &detachError) ||
+		errors.As(err, &sessionError) ||
+		errors.As(err, &connError)
 }
