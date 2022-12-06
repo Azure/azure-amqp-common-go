@@ -3,7 +3,7 @@ module github.com/Azure/azure-amqp-common-go/v4
 go 1.18
 
 require (
-	github.com/Azure/go-amqp v0.17.6-0.20221130234719-dd5083052614
+	github.com/Azure/go-amqp v0.18.0
 	github.com/Azure/go-autorest/autorest v0.11.18
 	github.com/Azure/go-autorest/autorest/adal v0.9.13
 	github.com/devigned/tab v0.1.1
