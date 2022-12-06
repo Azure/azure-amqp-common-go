@@ -33,9 +33,9 @@ import (
 
 	"github.com/devigned/tab"
 
-	common "github.com/Azure/azure-amqp-common-go/v3"
-	"github.com/Azure/azure-amqp-common-go/v3/internal/tracing"
-	"github.com/Azure/azure-amqp-common-go/v3/uuid"
+	common "github.com/Azure/azure-amqp-common-go/v4"
+	"github.com/Azure/azure-amqp-common-go/v4/internal/tracing"
+	"github.com/Azure/azure-amqp-common-go/v4/uuid"
 	"github.com/Azure/go-amqp"
 )
 
@@ -105,29 +105,17 @@ func LinkWithSessionFilter(sessionID *string) LinkOption {
 }
 
 // NewLink will build a new request response link
-// Deprecated: use NewLinkWithContext instead.
-func NewLink(conn *amqp.Conn, address string, opts ...LinkOption) (*Link, error) {
-	return NewLinkWithContext(context.Background(), conn, address, opts...)
-}
-
-// NewLinkWithContext will build a new request response link
-func NewLinkWithContext(ctx context.Context, conn *amqp.Conn, address string, opts ...LinkOption) (*Link, error) {
+func NewLink(ctx context.Context, conn *amqp.Conn, address string, opts ...LinkOption) (*Link, error) {
 	authSession, err := conn.NewSession(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewLinkWithSessionWithContext(ctx, authSession, address, opts...)
+	return NewLinkWithSession(ctx, authSession, address, opts...)
 }
 
 // NewLinkWithSession will build a new request response link, but will reuse an existing AMQP session
-// Deprecated: use NewLinkWithSessionWithContext instead.
-func NewLinkWithSession(session *amqp.Session, address string, opts ...LinkOption) (*Link, error) {
-	return NewLinkWithSessionWithContext(context.Background(), session, address, opts...)
-}
-
-// NewLinkWithSessionWithContext will build a new request response link, but will reuse an existing AMQP session
-func NewLinkWithSessionWithContext(ctx context.Context, session *amqp.Session, address string, opts ...LinkOption) (*Link, error) {
+func NewLinkWithSession(ctx context.Context, session *amqp.Session, address string, opts ...LinkOption) (*Link, error) {
 	linkID, err := uuid.NewV4()
 	if err != nil {
 		return nil, err

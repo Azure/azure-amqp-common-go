@@ -36,7 +36,7 @@ import (
 	"github.com/Azure/go-autorest/autorest/azure"
 	"golang.org/x/crypto/pkcs12"
 
-	"github.com/Azure/azure-amqp-common-go/v3/auth"
+	"github.com/Azure/azure-amqp-common-go/v4/auth"
 )
 
 const (
