@@ -28,7 +28,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
@@ -37,7 +36,7 @@ import (
 	"github.com/Azure/go-autorest/autorest/azure"
 	"golang.org/x/crypto/pkcs12"
 
-	"github.com/Azure/azure-amqp-common-go/v3/auth"
+	"github.com/Azure/azure-amqp-common-go/v4/auth"
 )
 
 const (
@@ -164,7 +163,7 @@ func (c *TokenProviderConfiguration) NewServicePrincipalToken() (*adal.ServicePr
 
 	// 2. Client Certificate
 	if c.CertificatePath != "" {
-		certData, err := ioutil.ReadFile(c.CertificatePath)
+		certData, err := os.ReadFile(c.CertificatePath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read the certificate file (%s): %v", c.CertificatePath, err)
 		}
