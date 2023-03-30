@@ -17,7 +17,7 @@ func TestResponseRouterBasic(t *testing.T) {
 	receiver := &fakeReceiver{
 		Responses: []rpcResponse{
 			{amqpMessageWithCorrelationId("my message id"), nil},
-			{nil, &amqp.DetachError{}},
+			{nil, &amqp.LinkError{}},
 		},
 	}
 
@@ -41,7 +41,7 @@ func TestResponseRouterMissingMessageID(t *testing.T) {
 	receiver := &fakeReceiver{
 		Responses: []rpcResponse{
 			{amqpMessageWithCorrelationId("my message id"), nil},
-			{nil, &amqp.DetachError{}},
+			{nil, &amqp.LinkError{}},
 		},
 	}
 
@@ -64,7 +64,7 @@ func TestResponseRouterBadCorrelationID(t *testing.T) {
 	receiver := &fakeReceiver{
 		Responses: []rpcResponse{
 			{messageWithBadCorrelationID, nil},
-			{nil, &amqp.DetachError{}},
+			{nil, &amqp.LinkError{}},
 		},
 	}
 
@@ -79,7 +79,7 @@ func TestResponseRouterBadCorrelationID(t *testing.T) {
 
 func TestResponseRouterFatalErrors(t *testing.T) {
 	fatalErrors := []error{
-		&amqp.DetachError{},
+		&amqp.LinkError{},
 		&amqp.ConnError{},
 		&amqp.SessionError{},
 	}
@@ -246,7 +246,7 @@ func TestRPCNilMessageMap(t *testing.T) {
 		Responses: []rpcResponse{
 			// this should let us see what deleteChannelFromMap does
 			{amqpMessageWithCorrelationId("hello"), nil},
-			{nil, &amqp.DetachError{}},
+			{nil, &amqp.LinkError{}},
 		},
 	}
 
@@ -275,8 +275,8 @@ func TestRPCNilMessageMap(t *testing.T) {
 
 	// now check that sending can handle it.
 	resp, err := link.RPC(context.Background(), &amqp.Message{})
-	var detachErr *amqp.DetachError
-	require.ErrorAs(t, err, &detachErr)
+	var linkErr *amqp.LinkError
+	require.ErrorAs(t, err, &linkErr)
 	require.Nil(t, resp)
 }
 
@@ -294,7 +294,7 @@ type fakeReceiver struct {
 	ch        <-chan struct{}
 }
 
-func (fr *fakeReceiver) Receive(ctx context.Context) (*amqp.Message, error) {
+func (fr *fakeReceiver) Receive(ctx context.Context, o *amqp.ReceiveOptions) (*amqp.Message, error) {
 	// wait until the actual send if we're simulating request/response
 	if fr.ch != nil {
 		<-fr.ch
@@ -314,7 +314,7 @@ type fakeSender struct {
 	ch   chan<- struct{}
 }
 
-func (s *fakeSender) Send(ctx context.Context, msg *amqp.Message) error {
+func (s *fakeSender) Send(ctx context.Context, msg *amqp.Message, o *amqp.SendOptions) error {
 	s.Sent = append(s.Sent, msg)
 
 	if s.ch != nil {
