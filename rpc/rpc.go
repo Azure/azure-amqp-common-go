@@ -85,12 +85,12 @@ type (
 
 	// Actually: *amqp.Receiver
 	amqpReceiver interface {
-		Receive(ctx context.Context) (*amqp.Message, error)
+		Receive(ctx context.Context, o *amqp.ReceiveOptions) (*amqp.Message, error)
 		Close(ctx context.Context) error
 	}
 
 	amqpSender interface {
-		Send(ctx context.Context, msg *amqp.Message) error
+		Send(ctx context.Context, msg *amqp.Message, o *amqp.SendOptions) error
 		Close(ctx context.Context) error
 	}
 )
@@ -217,7 +217,7 @@ func (l *Link) RetryableRPC(ctx context.Context, times int, delay time.Duration,
 // original `RPC` call.
 func (l *Link) startResponseRouter() {
 	for {
-		res, err := l.receiver.Receive(context.Background())
+		res, err := l.receiver.Receive(context.Background(), nil)
 
 		// You'll see this when the link is shutting down (either
 		// service-initiated via 'detach' or a user-initiated shutdown)
@@ -287,10 +287,10 @@ func (l *Link) RPC(ctx context.Context, msg *amqp.Message) (*Response, error) {
 	responseCh := l.addChannelToMap(messageID)
 
 	if responseCh == nil {
-		return nil, &amqp.DetachError{}
+		return nil, &amqp.LinkError{}
 	}
 
-	err = l.sender.Send(ctx, msg)
+	err = l.sender.Send(ctx, msg, nil)
 
 	if err != nil {
 		l.deleteChannelFromMap(messageID)
@@ -498,9 +498,9 @@ func addMessageID(message *amqp.Message, uuidNewV4 func() (uuid.UUID, error)) (*
 func isClosedError(err error) bool {
 	var connError *amqp.ConnError
 	var sessionError *amqp.SessionError
-	var detachError *amqp.DetachError
+	var linkError *amqp.LinkError
 
-	return (errors.As(err, &detachError) && detachError.RemoteErr == nil) ||
+	return (errors.As(err, &linkError) && linkError.RemoteErr == nil) ||
 		errors.As(err, &sessionError) ||
 		errors.As(err, &connError)
 }
